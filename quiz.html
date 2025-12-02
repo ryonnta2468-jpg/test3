@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CCNA</title>
+    <style>
+        /* CSSコード */
+        body {
+            font-family: sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .quiz-container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 600px;
+            text-align: center;
+        }
+
+        #question-status {
+            font-size: 16px;
+            margin-bottom: 10px;
+            text-align: left;
+        }
+
+        #question-image {
+            max-width: 100%;
+            height: auto;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+
+        .choices-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .choice-btn {
+            background-color: #007BFF;
+            color: white;
+            padding: 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+            text-align: left; /* テキストを左寄せに */
+            height: auto; /* 高さ自動調整 */
+        }
+
+        .choice-btn:hover {
+            background-color: #0056b3;
+        }
+
+        .choice-btn.selected {
+            background-color: #fd7e14;
+            border: 2px solid #e65100;
+        }
+        /* ... 他のスタイルは省略 ... */
+        .choice-btn.correct-answer { background-color: #28a745; }
+        .choice-btn.incorrect-answer { background-color: #dc3545; }
+        .choice-btn:disabled { cursor: not-allowed; opacity: 0.6; }
+        #result-area { margin-top: 20px; font-size: 18px; font-weight: bold; }
+        #explanation-area { margin-top: 15px; padding: 15px; background-color: #e9ecef; border-radius: 5px; text-align: center; display: none; }
+        #explanation-image { max-width: 100%; height: auto; border-radius: 5px; margin-top: 10px; }
+        .action-container { margin-top: 20px; }
+        #confirm-button { background-color: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
+        #confirm-button:disabled { background-color: #aaa; cursor: not-allowed; }
+        .nav-buttons { display: flex; justify-content: space-between; margin-top: 20px; align-items: center; }
+        .nav-buttons button { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
+        #prev-button { background-color: #6c757d; color: white; }
+        #next-button { background-color: #ffc107; color: black; display: none; }
+        .jump-container { margin-top: 20px; padding-top: 10px; border-top: 1px solid #ddd; }
+    </style>
+</head>
+<body>
+
+    <div class="quiz-container">
+        <h1>CCNA</h1>
+        <div id="question-status"></div>
+        <img id="question-image" src="" alt="問題画像">
+        <div class="choices-container" id="choices">
+            <!-- 選択肢ボタンはJavaScriptで生成されます -->
+        </div>
+        
+        <div class="action-container">
+             <button id="confirm-button" onclick="confirmAnswer()" disabled>回答を確定</button>
+        </div>
+
+        <div id="result-area"></div>
+        <div id="explanation-area"></div>
+
+        <div class="nav-buttons">
+            <button id="prev-button" onclick="prevQuestion()">前の問題</button>
+            <button id="next-button" onclick="nextQuestion()">次の問題</button>
+        </div>
+        <div class="jump-container">
+            <input type="number" id="question-number-input" min="1" value="1">
+            <button onclick="jumpToQuestion()">問題番号へジャンプ</button>
+        </div>
+    </div>
+
+    <script>
+        // JavaScriptコード
+        const questions = [
+            {
+                image: 'images/q1.png',
+                // 正解は "value" の文字列で指定
+                answers: ['D'], 
+                explanationText: '',
+                explanationImage: 'images/a1.png',
+                // choicesはオブジェクトの配列に変更
+                choices: [
+                    { value: 'A', displayText: 'ECN' },
+                    { value: 'B', displayText: 'Header Checksum' },
+                    { value: 'C', displayText: 'Type of Service' },
+                    { value: 'D', displayText: 'DSCP' }
+                ],
+                userAnswers: [] 
+            },
+            {
+                image: 'images/q2.png',////
+                answers: ['N'], 
+                explanationText: 'ドラックドロップは別のサイトで',
+                explanationImage: 'images/a2.png',////
+                choices: [
+                    { value: 'N', displayText: '' },
+                ],
+                userAnswers: [] 
+            },
+            {
+                image: 'images/q3.png',////
+                answers: ['C'], 
+                explanationText: '',
+                explanationImage: 'images/a3.png',////
+                choices: [
+                    { value: 'A', displayText: 'expedited' },
+                    { value: 'B', displayText: 'default' },
+                    { value: 'C', displayText: 'assured' },
+                    { value: 'D', displayText: 'class-selector' }
+                ],
+                userAnswers: [] 
+            },
+            {
+                image: 'images/q4.png',////
+                answers: ['B', 'D'], 
+                explanationText: '',
+                explanationImage: 'images/a4.png',////
+                choices: [
+                    { value: 'A', displayText: 'DNS をローカルに割り当て、要求を DHCP サーバーに転送します。' },
+                    { value: 'B', displayText: '必要な DHCP サーバーの数を最小限に抑える' },
+                    { value: 'C', displayText: '個々のレイヤ 3 インターフェイスで 1 つの IP ヘルパー コマンドを許可します。' },
+                    { value: 'D', displayText: 'クライアント サブネット上のルーターのレイヤー 3 インターフェイスの下に設定されている' },
+                    { value: 'E', displayText: 'クライアントのローカル サブネットを決定するために MAC から IP への予約のみを許可します。' }, 
+               ],
+                userAnswers: [] 
+            },
+            {
+                image: 'images/q5.png',////
+                answers: ['A'], 
+                explanationText: '',
+                explanationImage: 'images/a5.png',////
+                choices: [
+                    { value: 'A', displayText: ' ip helper-address 172.16.32.15' },
+                    { value: 'B', displayText: 'ip default-gateway 192.168.52.253' },
+                    { value: 'C', displayText: 'ip forward-protocol udp 137' },
+                    { value: 'D', displayText: ' ip detault-network 192.168.52.253' }
+                ],
+                userAnswers: [] 
+            },
+            {
+                image: 'images/q6.png',////
+                answers: ['C', 'D'], 
+                explanationText: '',
+                explanationImage: 'images/a6.png',////
+                choices: [
+                    { value: 'A', displayText: 'IP' },
+                    { value: 'B', displayText: 'RTP' },
+                    { value: 'C', displayText: 'TCP' },
+                    { value: 'D', displayText: 'UDP' },
+                    { value: 'E', displayText: 'ARP' }, 
+               ],
+                userAnswers: [] 
+            },
+            {
+                image: 'images/q7.png',////
+                answers: ['C'], 
+                explanationText: '',
+                explanationImage: 'images/a7.png',////
+                choices: [
+                    { value: 'A', displayText: 'ネットワークデバイス上でトラフィックマッチングルールを設定します。' },
+                    { value: 'B', displayText: 'クラスに応じたサービス トラフィック' },
+                    { value: 'C', displayText: '特定の処理を受けるトラフィックのタイプを識別する' },
+                    { value: 'D', displayText: 'パケットのクラス識別子をパケットヘッダーの専用フィールドに書き込みます。' }
+                ],
+                userAnswers: [] 
+            },
+            {
+                image: 'images/q8.png',////
+                answers: ['N'], 
+                explanationText: 'ドラックドロップは別のサイトで',
+                explanationImage: 'images/a8.png',////
+                choices: [
+                    { value: 'N', displayText: '' },
+                ],
+                userAnswers: [] 
+            },
+            {
+                image: 'images/q9.png',////
+                answers: ['D'], 
+                explanationText: '',
+                explanationImage: 'images/a9.png',////
+                choices: [
+                    { value: 'A', displayText: 'interface FastEthernet0/1<br>ip helper-address 10.0.1.1<br>!<br>access-list 100 permit tcp host 10.0.1.1 eq 67 host 10.148.2.1' },
+                    { value: 'B', displayText: ' interface FastEthernet0/1<br>ip helper-address 10.0.1.1<br>!<br>access-list 100 permit udp host 10.0.1.1 eq 67 host 10.148.2.1' },
+                    { value: 'C', displayText: 'interface FastEthernet0/0<br>ip helper-address 10.0.1.1<br>!<br>access-list 100 permit host 10.0.1.1 host 10.148.2.1 eq bootps' },
+                    { value: 'D', displayText: 'interface FastEthernet0/1<br>ip helper-address 10.0.1.1<br>!<br>access-list 100 permit udp host 10.0.1.1 eq bootps host 10.148.2.1' }
+                ],
+                userAnswers: [] 
+            },
+            {
+                image: 'images/q10.png',////
+                answers: ['N'], 
+                explanationText: 'ドラックドロップは別のサイトで',
+                explanationImage: 'images/a10.png',////
+                choices: [
+                    { value: 'N', displayText: '' },
+                ],
+                userAnswers: [] 
+            },
+            {
+                image: 'images/q11.png',////
+                answers: ['D', 'E'], 
+                explanationText: '',
+                explanationImage: 'images/a11.png',////
+                choices: [
+                    { value: 'A', displayText: 'Get' },
+                    { value: 'B', displayText: 'GetNext' },
+                    { value: 'C', displayText: 'Set' },
+                    { value: 'D', displayText: 'GetBulk' },
+                    { value: 'E', displayText: 'Inform' }, 
+               ],
+                userAnswers: [] 
+            },
+            {
+                image: 'images/q12.png',////
+                answers: ['N'], 
+                explanationText: 'ドラックドロップは別のサイトで',
+                explanationImage: 'images/a12.png',////
+                choices: [
+                    { value: 'N', displayText: '' },
+                ],
+                userAnswers: [] 
+            },
+            {
+                image: 'images/q13.png',////
+                answers: ['A'], 
+                explanationText: '',
+                explanationImage: 'images/a13.png',////
+                choices: [
+                    { value: 'A', displayText: '各デバイスからの syslog メッセージの重大度を設定します。' },
+                    { value: 'B', displayText: 'ローカルに保存されるさまざまなデバイスからの syslog メッセージの数を制御するため' },
+                    { value: 'C', displayText: '各 syslog メッセージの発信元を特定する' },
+                    { value: 'D', displayText: '各デバイスからのさまざまな重大度レベルのメッセージのレート制限' }
+                ],
+                userAnswers: [] 
+            },
+            {
+                image: 'images/q14.png',////
+                answers: ['C'], 
+                explanationText: 'スイッチ視点でどこに問い合わせるか',
+                explanationImage: '',////
+                choices: [
+                    { value: 'A', displayText: 'SW1(config-if)#ip helper-address 192.168.10.1' },
+                    { value: 'B', displayText: 'SW1(config-if)#ip helper-address 192.168.20.1' },
+                    { value: 'C', displayText: 'SW1(config-if)#ip helper-address 192.168.20.2' },
+                    { value: 'D', displayText: 'SW1(config-if)#ip helper-address 192.168.10.2' }
+                ],
+                userAnswers: [] 
+            },
+            {
+                image: 'images/q15.png',////
+                answers: ['N'], 
+                explanationText: 'ドラックドロップは別のサイトで',
+                explanationImage: 'images/a15.png',////
+                choices: [
+                    { value: 'N', displayText: '' },
+                ],
+                userAnswers: [] 
+            },
+            {
+                image: 'images/q16.png',////
+                answers: ['A'], 
+                explanationText: 'Secure Shell = SSH',
+                explanationImage: 'images/a16.png',////
+                choices: [
+                    { value: 'A', displayText: ' Router(config)#hostname R15 -<br>R15(config)#ip domain-name cisco.com<br>R15(config)#crypto key generate rsa general-keys modulus 1024<br><br>R15(config)#ip ssh version 2 -<br><br>R15(config-line)#line vty 0 15 -<br>R15(config-line)# transport input ssh' },
+                    { value: 'B', displayText: ' Router(config)#crypto key generate rsa general-keys modulus 1024<br><br>Router(config)#ip ssh version 2 -<br>Router(config-line)#line vty 015<br>Router(config-line)# transport input ssh<br>Router(contig)#ip ssh logging events<br>R15(config)#ip ssh stricthostkeycheck' },
+                    { value: 'C', displayText: 'Router(config)#hostname R15 -<br>R15(config)#crypto key generate rsa general-keys modulus 1024<br><br>R15(config-line)#line vty 0 15 -<br>R15(config-line)# transport input ssh<br>R15(config)#ip ssh source-interface Fa0/0<br>R15(config)#ip ssh stricthostkeycheck' },
+                    { value: 'D', displayText: 'Router(config)#ip domain-name cisco.com<br>Router(config)#crypto key generate rsa general-keys modulus 1024<br><br>Router(contig)#ip ssh version 2 -<br>Router(config-line)#line vty 0 15<br>Router(config-line)# transport input all<br>Router(config)#ip ssh logging events' }
+                ],
+                userAnswers: [] 
+            },
+            {
+                image: 'images/q17.png',////
+                answers: ['A', 'C'], 
+                explanationText: '',
+                explanationImage: 'images/a17.png',////
+                choices: [
+                    { value: 'A', displayText: 'no ip name-serveer 198.51.100.210' },
+                    { value: 'B', displayText: 'no login local' },
+                    { value: 'C', displayText: 'no service password-encryption' },
+                    { value: 'D', displayText: 'no ip domain mame ccna.cisco.com' },
+                    { value: 'E', displayText: 'no hostname CPE' }, 
+               ],
+                userAnswers: [] 
+            },
+            {
+                image: 'images/q18.png',////
+                answers: ['B', 'C'], 
+                explanationText: '',
+                explanationImage: 'images/a18.png',////
+                choices: [
+                    { value: 'A', displayText: 'bursting' },
+                    { value: 'B', displayText: 'dropping' },
+                    { value: 'C', displayText: 'remarking' },
+                    { value: 'D', displayText: 'fragmentation' },
+                    { value: 'E', displayText: 'buffering' }, 
+               ],
+                userAnswers: [] 
+            },
+            {
+                image: 'images/q19.png',////
+                answers: ['A', 'D'], 
+                explanationText: '',
+                explanationImage: 'images/a19.png',////
+                choices: [
+                    { value: 'A', displayText: 'authoritative' },
+                    { value: 'B', displayText: 'web' },
+                    { value: 'C', displayText: ' file transfer' },
+                    { value: 'D', displayText: 'resolver' },
+                    { value: 'E', displayText: 'ESX host' }, 
+               ],
+                userAnswers: [] 
+            },
+            {
+                image: 'images/q20.png',////
+                answers: ['D'], 
+                explanationText: '',
+                explanationImage: 'images/a20.png',////
+                choices: [
+                    { value: 'A', displayText: 'ポリシーベースのルーティングが有効になります。' },
+                    { value: 'B', displayText: '動的なフロー識別が可能になります。' },
+                    { value: 'C', displayText: 'ベストエフォート型のサービスを提供します。' },
+                    { value: 'D', displayText: ' 帯域幅の使用を制限します。' }
+                ],
+                userAnswers: [] 
+            },
+            // ここに問題を追加できます
+        ];
+
+        let currentQuestionIndex = 0;
+        let answered = false;
+        
+        const questionStatus = document.getElementById('question-status');
+        const questionImage = document.getElementById('question-image');
+        const choicesContainer = document.getElementById('choices');
+        const resultArea = document.getElementById('result-area');
+        const explanationArea = document.getElementById('explanation-area');
+        const nextButton = document.getElementById('next-button');
+        const prevButton = document.getElementById('prev-button');
+        const confirmButton = document.getElementById('confirm-button');
+        const questionNumberInput = document.getElementById('question-number-input');
+
+
+        // 配列をシャッフルするユーティリティ関数
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+
+        function loadQuestion() {
+            if (currentQuestionIndex >= 0 && currentQuestionIndex < questions.length) {
+                const currentQuestion = questions[currentQuestionIndex];
+                const isMultipleChoice = currentQuestion.answers.length > 1;
+
+                questionImage.src = currentQuestion.image;
+                choicesContainer.innerHTML = '';
+                resultArea.textContent = '';
+                explanationArea.innerHTML = '';
+                explanationArea.style.display = 'none';
+                answered = currentQuestion.userAnswers.length > 0;
+                
+                questionStatus.textContent = `問題 ${currentQuestionIndex + 1} / ${questions.length} (${isMultipleChoice ? '複数選択' : '単一選択'}、正解${currentQuestion.answers.length}つ)`;
+                questionNumberInput.value = currentQuestionIndex + 1;
+
+                nextButton.style.display = answered ? 'block' : 'none';
+                confirmButton.style.display = answered ? 'none' : 'inline-block';
+                
+                prevButton.style.display = (currentQuestionIndex === 0) ? 'none' : 'block';
+                nextButton.textContent = (currentQuestionIndex === questions.length - 1) ? '結果を見る' : '次の問題';
+
+                // 選択肢のシャッフルはオブジェクトの配列に対して行う
+                const displayedChoices = answered ? currentQuestion.choices : shuffleArray([...currentQuestion.choices]);
+                
+                if (!answered) {
+                   currentQuestion.choices = displayedChoices;
+                }
+                
+                displayedChoices.forEach(choiceObj => {
+                    const button = document.createElement('button');
+                    // innerHTMLを使って改行タグを有効にする
+                    button.innerHTML = choiceObj.displayText; 
+                    button.classList.add('choice-btn');
+                    // data-value属性に純粋な値を保存する
+                    button.setAttribute('data-value', choiceObj.value);
+                    button.onclick = () => toggleChoice(choiceObj.value, button, currentQuestion, isMultipleChoice);
+                    
+
+                    if (answered) {
+                        button.disabled = true;
+                        if (currentQuestion.answers.includes(choiceObj.value)) {
+                            button.classList.add('correct-answer');
+                        } else if (currentQuestion.userAnswers.includes(choiceObj.value)) {
+                             button.classList.add('incorrect-answer');
+                        }
+                    } else if (currentQuestion.userAnswers.includes(choiceObj.value)) {
+                        button.classList.add('selected');
+                    }
+
+                    choicesContainer.appendChild(button);
+                });
+                
+                if (answered) {
+                     updateResultArea(currentQuestion);
+                     displayExplanation(currentQuestion);
+                }
+
+                checkConfirmButtonStatus(currentQuestion, isMultipleChoice);
+
+
+            } else if (currentQuestionIndex === questions.length) {
+                endQuiz();
+            }
+        }
+
+        // value (純粋な値) を引数として受け取るように変更
+        function toggleChoice(value, button, currentQuestion, isMultipleChoice) {
+            if (answered) return;
+
+            if (!isMultipleChoice) {
+                Array.from(choicesContainer.children).forEach(btn => {
+                    btn.classList.remove('selected');
+                });
+                currentQuestion.userAnswers = [value];
+                button.classList.add('selected');
+
+            } else {
+                const index = currentQuestion.userAnswers.indexOf(value);
+                if (index > -1) {
+                    currentQuestion.userAnswers.splice(index, 1);
+                    button.classList.remove('selected');
+                } else {
+                    currentQuestion.userAnswers.push(value);
+                    button.classList.add('selected');
+                }
+            }
+            checkConfirmButtonStatus(currentQuestion, isMultipleChoice);
+        }
+        
+        function checkConfirmButtonStatus(currentQuestion, isMultipleChoice) {
+            const requiredCount = isMultipleChoice ? currentQuestion.answers.length : 1;
+            if (currentQuestion.userAnswers.length === requiredCount) {
+                confirmButton.disabled = false;
+            } else {
+                confirmButton.disabled = true;
+            }
+        }
+
+
+        // 回答を確定する
+        function confirmAnswer() {
+            const currentQuestion = questions[currentQuestionIndex];
+            answered = true;
+            confirmButton.style.display = 'none';
+            nextButton.style.display = 'block';
+
+            Array.from(choicesContainer.children).forEach(btn => {
+                btn.disabled = true;
+                // data-value属性から値を取得して比較
+                const choiceValue = btn.getAttribute('data-value'); 
+                if (currentQuestion.answers.includes(choiceValue)) {
+                    btn.classList.add('correct-answer');
+                } else if (currentQuestion.userAnswers.includes(choiceValue)) {
+                    btn.classList.add('incorrect-answer');
+                }
+                 btn.classList.remove('selected');
+            });
+
+            updateResultArea(currentQuestion);
+            displayExplanation(currentQuestion);
+        }
+
+        function displayExplanation(currentQuestion) {
+            explanationArea.innerHTML = '';
+            if (currentQuestion.explanationText) {
+                const textNode = document.createElement('p');
+                textNode.textContent = currentQuestion.explanationText;
+                textNode.style.textAlign = 'left';
+                explanationArea.appendChild(textNode);
+            }
+            if (currentQuestion.explanationImage) {
+                const imageNode = document.createElement('img');
+                imageNode.src = currentQuestion.explanationImage;
+                imageNode.id = 'explanation-image';
+                imageNode.alt = '解説画像';
+                explanationArea.appendChild(imageNode);
+            }
+            explanationArea.style.display = 'block';
+        }
+
+        function updateResultArea(currentQuestion) {
+            const isCorrect = JSON.stringify([...currentQuestion.userAnswers].sort()) === JSON.stringify([...currentQuestion.answers].sort());
+            if (isCorrect) {
+                resultArea.textContent = '正解！';
+                resultArea.style.color = 'green';
+            } else {
+                resultArea.textContent = '不正解...';
+                resultArea.style.color = 'red';
+            }
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            loadQuestion();
+        }
+
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                loadQuestion();
+            }
+        }
+        
+        function jumpToQuestion() {
+            const inputVal = parseInt(questionNumberInput.value, 10);
+            if (!isNaN(inputVal) && inputVal >= 1 && inputVal <= questions.length) {
+                currentQuestionIndex = inputVal - 1;
+                loadQuestion();
+            } else {
+                alert(`1から${questions.length}までの有効な問題番号を入力してください。`);
+                questionNumberInput.value = currentQuestionIndex + 1;
+            }
+        }
+
+        function endQuiz() {
+            questionStatus.style.display = 'none';
+            questionImage.style.display = 'none';
+            choicesContainer.style.display = 'none';
+            prevButton.style.display = 'none';
+            nextButton.style.display = 'none';
+            confirmButton.style.display = 'none';
+            explanationArea.style.display = 'none';
+            document.querySelector('.jump-container').style.display = 'none';
+
+            let score = 0;
+            questions.forEach(q => {
+                if (JSON.stringify([...q.userAnswers].sort()) === JSON.stringify([...q.answers].sort())) {
+                    score++;
+                }
+            });
+            
+            resultArea.textContent = `問題終了！ ${questions.length}問中 ${score}問正解しました。`;
+            resultArea.style.color = 'black';
+        }
+
+        // 最初の問題を読み込む
+        loadQuestion();
+    </script>
+</body>
+</html>
