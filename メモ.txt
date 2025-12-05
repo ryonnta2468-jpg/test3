@@ -1,0 +1,149 @@
+ーーーーーーーーーーーーー
+
+<br>
+
+
+            {
+                image: 'images/q.png',////
+                answers: ['D'], 
+                explanationText: '',
+                explanationImage: 'images/a.png',////
+                choices: [
+                    { value: 'A', displayText: '' },
+                    { value: 'B', displayText: '' },
+                    { value: 'C', displayText: '' },
+                    { value: 'D', displayText: '' }
+                ],
+                userAnswers: [] 
+            },
+
+
+
+            {
+                image: 'images/q.png',////
+                answers: ['N'], 
+                explanationText: '',
+                explanationImage: 'images/a.png',////
+                choices: [
+                    { value: 'N', displayText: '考えた' },
+                ],
+                userAnswers: [] 
+            },
+
+            {
+                image: 'images/q.png',////
+                answers: ['S'], 
+                explanationText: '',
+                explanationImage: 'images/a.png',////
+                choices: [
+                    { value: 'S', displayText: '考えた' },
+                ],
+                userAnswers: [] 
+            },
+
+
+            {
+                image: 'images/q.png',////
+                answers: ['B', 'D'], 
+                explanationText: '',
+                explanationImage: 'images/a.png',////
+                choices: [
+                    { value: 'A', displayText: '' },
+                    { value: 'B', displayText: '' },
+                    { value: 'C', displayText: '' },
+                    { value: 'D', displayText: '' },
+               ],
+                userAnswers: [] 
+            },
+
+
+
+            {
+                image: 'images/q.png',////
+                answers: ['B', 'D'], 
+                explanationText: '',
+                explanationImage: 'images/a.png',////
+                choices: [
+                    { value: 'A', displayText: '' },
+                    { value: 'B', displayText: '' },
+                    { value: 'C', displayText: '' },
+                    { value: 'D', displayText: '' },
+                    { value: 'E', displayText: '' }, 
+               ],
+                userAnswers: [] 
+            },
+
+ーーーーーーーーーーーー
+
+            {
+                image: 'images/q.png',////
+                answers: ['N'], 
+                explanationText: 'ドラックドロップは別のサイトで',
+                explanationImage: 'images/a.png',////
+                choices: [
+                    { value: 'N', displayText: '考えた' },
+                ],
+                userAnswers: [] 
+            },
+
+
+
+↓問題コード作成AI調教用
+
+ーーーーーーーーーーー
+問題 37
+RSA の特徴は何ですか?
+A. 暗号化には事前共有キーが使用されます。
+B. 非対称暗号化アルゴリズムです。
+C. 対称復号化アルゴリズムです。
+D. 暗号化するには、双方が同一のキーを持っている必要があります。
+
+上記ような文章を入力したときに、
+
+            {
+                image: 'images/q37.png',
+                answers: [''], 
+                explanationText: '',
+                explanationImage: 'images/a37.png',
+                choices: [
+                    { value: 'A', displayText: '暗号化には事前共有キーが使用されます。' },
+                    { value: 'B', displayText: '非対称暗号化アルゴリズムです。' },
+                    { value: 'C', displayText: '対称復号化アルゴリズムです。' },
+                    { value: 'D', displayText: '暗号化するには、双方が同一のキーを持っている必要があります。' }
+                ],
+                userAnswers: [] 
+            },
+
+この形式に変換して、画像ファイル名は問題番号を入れてください。
+
+explanationImage: '',は何も記載せずに出力して下さい。
+
+解説欄は改行を行わないでください。
+
+回答の選択肢内で改行が必要な場合は<br>を使用してください。
+
+解説内では選択肢を指すA,Bなどのアルファベットは使わずに解説してください。
+
+これ以降問題を送った場合の解答はすべてこの形式で変換してください。
+
+送信する問題はすべてciscoの問題です。
+
+
+
+
+
+
+$i = 201; Get-ChildItem -Filter *.png | Sort-Object LastWriteTime | ForEach-Object { Rename-Item $_.FullName -NewName "q$($i).png"; $i++ }
+
+
+
+ーーーーーーーーーーーーーーーーーーーーーー
+
+ガチのメモ
+
+・ワイヤレスネットワークにおけるSSIDの特徴は何ですか。
+これがめんどくさい答えが複数あった場合優先度が大きいほうが優先
+
+↓優先度
+名前をWLANに関連付ける　＞　WLAN上のアクセスポイントを識別する　＞　デフォルトでビーコン信号をブロードキャストしてその存在を通知する
+

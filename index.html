@@ -1,0 +1,3853 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CCNA</title>
+    <style>
+        /* CSSコード */
+        body {
+            font-family: sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 600px;
+            text-align: center;
+        }
+        
+        /* タイトル画面のスタイル */
+        #title-screen {
+            display: block; /* 初期表示 */
+        }
+
+        #title-screen button {
+            padding: 15px 30px;
+            font-size: 16px;
+            margin: 8px 0;
+            cursor: pointer;
+            width: 80%;
+            border: none;
+            border-radius: 5px;
+            color: white;
+        }
+
+        #start-normal-button { background-color: #007BFF; }
+        #start-random-button { background-color: #007BFF; color: black; }
+        #start-n-mode-button { background-color: #81cc91; }
+        #start-s-mode-button { background-color: #81cc91; }
+
+
+        /* クイズ画面のスタイル */
+        #quiz-screen {
+            display: none; /* 初期非表示 */
+        }
+        
+        #question-status { font-size: 16px; margin-bottom: 10px; text-align: left; }
+        #question-image { max-width: 100%; height: auto; margin-bottom: 20px; border-radius: 5px; }
+        .choices-container { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .choice-btn { background-color: #007BFF; color: white; padding: 15px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; transition: background-color 0.3s; text-align: left; height: auto; }
+        .choice-btn:hover { background-color: #0056b3; }
+        .choice-btn.selected { background-color: #fd7e14; border: 2px solid #e65100; }
+        .choice-btn.correct-answer { background-color: #28a745; }
+        .choice-btn.incorrect-answer { background-color: #dc3545; }
+        .choice-btn:disabled { cursor: not-allowed; opacity: 0.6; }
+        #result-area { margin-top: 20px; font-size: 18px; font-weight: bold; }
+        #explanation-area { margin-top: 15px; padding: 15px; background-color: #e9ecef; border-radius: 5px; text-align: center; display: none; }
+        #explanation-image { max-width: 100%; height: auto; border-radius: 5px; margin-top: 10px; }
+        .action-container { margin-top: 20px; }
+        #confirm-button { background-color: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
+        #confirm-button:disabled { background-color: #aaa; cursor: not-allowed; }
+        .nav-buttons { display: flex; justify-content: space-between; margin-top: 20px; align-items: center; }
+        .nav-buttons button { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
+        #prev-button { background-color: #6c757d; color: white; }
+        #next-button { background-color: #ffc107; color: black; display: none; }
+        .jump-container { margin-top: 20px; padding-top: 10px; border-top: 1px solid #ddd; }
+
+        /* メモ機能のスタイル */
+        #memo-button {
+            background-color: #17a2b8;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        #memo-area {
+            display: none; /* 初期状態では非表示 */
+            margin-top: 10px;
+            width: 100%;
+            height: 100px;
+            padding: 10px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            resize: vertical;
+        }
+
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- タイトル画面 -->
+        <div id="title-screen">
+            <h1>CCNA</h1>
+            <p>プレイモードを選択してください。</p>
+            <button id="start-normal-button" onclick="startGame('normal')">順番に解く（通常モード）</button>
+            <button id="start-random-button" onclick="startGame('random')">ランダムに出題</button>
+            <button id="start-n-mode-button" onclick="startGame('N_mode')">ドラックドロップ問題のみ</button>
+            <button id="start-s-mode-button" onclick="startGame('S_mode')">シミュレーション問題のみ</button>
+        </div>
+
+        <!-- クイズ画面 -->
+        <div id="quiz-screen">
+            <div id="question-status"></div>
+            <img id="question-image" src="" alt="問題画像">
+            <div class="choices-container" id="choices"></div>
+            <div class="action-container">
+                 <button id="confirm-button" onclick="confirmAnswer()" disabled>回答を確定</button>
+            </div>
+            <div id="result-area"></div>
+            <div id="explanation-area"></div>
+            <div class="nav-buttons">
+                <button id="prev-button" onclick="prevQuestion()">前の問題</button>
+                <button id="next-button" onclick="nextQuestion()">次の問題</button>
+            </div>
+
+            <button id="memo-button" onclick="toggleMemo()">メモを開く/閉じる</button>
+            <textarea id="memo-area" placeholder="ここにメモを入力してください...（保存されません）"></textarea>
+
+            <div class="jump-container">
+                <input type="number" id="question-number-input" min="1" value="1">
+                <button onclick="jumpToQuestion()">問題番号へジャンプ</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 元の問題データの定義
+        const originalQuestions = [
+            {
+                image: 'images/q1.png',
+                // 正解は "value" の文字列で指定
+                answers: ['D'], 
+                explanationText: '',
+                explanationImage: 'images/a1.png',
+                // choicesはオブジェクトの配列に変更
+                choices: [
+                    { value: 'A', displayText: 'ECN' },
+                    { value: 'B', displayText: 'Header Checksum' },
+                    { value: 'C', displayText: 'Type of Service' },
+                    { value: 'D', displayText: 'DSCP' }
+                ],
+                userAnswers: [] 
+            },
+            {
+                image: 'images/q2.png',////
+                answers: ['N'], 
+                explanationText: 'ドラックドロップは別のサイトで',
+                explanationImage: 'images/a2.png',////
+                choices: [
+                    { value: 'N', displayText: '考えた' },
+                ],
+                userAnswers: [] 
+            },
+            {
+                image: 'images/q3.png',////
+                answers: ['C'], 
+                explanationText: '',
+                explanationImage: 'images/a3.png',////
+                choices: [
+                    { value: 'A', displayText: 'expedited' },
+                    { value: 'B', displayText: 'default' },
+                    { value: 'C', displayText: 'assured' },
+                    { value: 'D', displayText: 'class-selector' }
+                ],
+                userAnswers: [] 
+            },
+            {
+                image: 'images/q4.png',////
+                answers: ['B', 'D'], 
+                explanationText: '',
+                explanationImage: 'images/a4.png',////
+                choices: [
+                    { value: 'A', displayText: 'DNS をローカルに割り当て、要求を DHCP サーバーに転送します。' },
+                    { value: 'B', displayText: '必要な DHCP サーバーの数を最小限に抑える' },
+                    { value: 'C', displayText: '個々のレイヤ 3 インターフェイスで 1 つの IP ヘルパー コマンドを許可します。' },
+                    { value: 'D', displayText: 'クライアント サブネット上のルーターのレイヤー 3 インターフェイスの下に設定されている' },
+                    { value: 'E', displayText: 'クライアントのローカル サブネットを決定するために MAC から IP への予約のみを許可します。' }, 
+               ],
+                userAnswers: [] 
+            },
+            {
+                image: 'images/q5.png',////
+                answers: ['A'], 
+                explanationText: '',
+                explanationImage: 'images/a5.png',////
+                choices: [
+                    { value: 'A', displayText: ' ip helper-address 172.16.32.15' },
+                    { value: 'B', displayText: 'ip default-gateway 192.168.52.253' },
+                    { value: 'C', displayText: 'ip forward-protocol udp 137' },
+                    { value: 'D', displayText: ' ip detault-network 192.168.52.253' }
+                ],
+                userAnswers: [] 
+            },
+            {
+                image: 'images/q6.png',////
+                answers: ['C', 'D'], 
+                explanationText: '',
+                explanationImage: 'images/a6.png',////
+                choices: [
+                    { value: 'A', displayText: 'IP' },
+                    { value: 'B', displayText: 'RTP' },
+                    { value: 'C', displayText: 'TCP' },
+                    { value: 'D', displayText: 'UDP' },
+                    { value: 'E', displayText: 'ARP' }, 
+               ],
+                userAnswers: [] 
+            },
+            {
+                image: 'images/q7.png',////
+                answers: ['C'], 
+                explanationText: '',
+                explanationImage: 'images/a7.png',////
+                choices: [
+                    { value: 'A', displayText: 'ネットワークデバイス上でトラフィックマッチングルールを設定します。' },
+                    { value: 'B', displayText: 'クラスに応じたサービス トラフィック' },
+                    { value: 'C', displayText: '特定の処理を受けるトラフィックのタイプを識別する' },
+                    { value: 'D', displayText: 'パケットのクラス識別子をパケットヘッダーの専用フィールドに書き込みます。' }
+                ],
+                userAnswers: [] 
+            },
+            {
+                image: 'images/q8.png',////
+                answers: ['N'], 
+                explanationText: 'ドラックドロップは別のサイトで',
+                explanationImage: 'images/a8.png',////
+                choices: [
+                    { value: 'N', displayText: '考えた' },
+                ],
+                userAnswers: [] 
+            },
+            {
+                image: 'images/q9.png',////
+                answers: ['D'], 
+                explanationText: '',
+                explanationImage: 'images/a9.png',////
+                choices: [
+                    { value: 'A', displayText: 'interface FastEthernet0/1<br>ip helper-address 10.0.1.1<br>!<br>access-list 100 permit tcp host 10.0.1.1 eq 67 host 10.148.2.1' },
+                    { value: 'B', displayText: ' interface FastEthernet0/1<br>ip helper-address 10.0.1.1<br>!<br>access-list 100 permit udp host 10.0.1.1 eq 67 host 10.148.2.1' },
+                    { value: 'C', displayText: 'interface FastEthernet0/0<br>ip helper-address 10.0.1.1<br>!<br>access-list 100 permit host 10.0.1.1 host 10.148.2.1 eq bootps' },
+                    { value: 'D', displayText: 'interface FastEthernet0/1<br>ip helper-address 10.0.1.1<br>!<br>access-list 100 permit udp host 10.0.1.1 eq bootps host 10.148.2.1' }
+                ],
+                userAnswers: [] 
+            },
+            {
+                image: 'images/q10.png',////
+                answers: ['N'], 
+                explanationText: 'ドラックドロップは別のサイトで',
+                explanationImage: 'images/a10.png',////
+                choices: [
+                    { value: 'N', displayText: '考えた' },
+                ],
+                userAnswers: [] 
+            },
+            {
+                image: 'images/q11.png',////
+                answers: ['D', 'E'], 
+                explanationText: '',
+                explanationImage: 'images/a11.png',////
+                choices: [
+                    { value: 'A', displayText: 'Get' },
+                    { value: 'B', displayText: 'GetNext' },
+                    { value: 'C', displayText: 'Set' },
+                    { value: 'D', displayText: 'GetBulk' },
+                    { value: 'E', displayText: 'Inform' }, 
+               ],
+                userAnswers: [] 
+            },
+            {
+                image: 'images/q12.png',////
+                answers: ['N'], 
+                explanationText: 'ドラックドロップは別のサイトで',
+                explanationImage: 'images/a12.png',////
+                choices: [
+                    { value: 'N', displayText: '考えた' },
+                ],
+                userAnswers: [] 
+            },
+            {
+                image: 'images/q13.png',////
+                answers: ['A'], 
+                explanationText: '',
+                explanationImage: 'images/a13.png',////
+                choices: [
+                    { value: 'A', displayText: '各デバイスからの syslog メッセージの重大度を設定します。' },
+                    { value: 'B', displayText: 'ローカルに保存されるさまざまなデバイスからの syslog メッセージの数を制御するため' },
+                    { value: 'C', displayText: '各 syslog メッセージの発信元を特定する' },
+                    { value: 'D', displayText: '各デバイスからのさまざまな重大度レベルのメッセージのレート制限' }
+                ],
+                userAnswers: [] 
+            },
+            {
+                image: 'images/q14.png',////
+                answers: ['C'], 
+                explanationText: 'スイッチ視点でどこに問い合わせるか',
+                explanationImage: '',////
+                choices: [
+                    { value: 'A', displayText: 'SW1(config-if)#ip helper-address 192.168.10.1' },
+                    { value: 'B', displayText: 'SW1(config-if)#ip helper-address 192.168.20.1' },
+                    { value: 'C', displayText: 'SW1(config-if)#ip helper-address 192.168.20.2' },
+                    { value: 'D', displayText: 'SW1(config-if)#ip helper-address 192.168.10.2' }
+                ],
+                userAnswers: [] 
+            },
+            {
+                image: 'images/q15.png',////
+                answers: ['N'], 
+                explanationText: 'ドラックドロップは別のサイトで',
+                explanationImage: 'images/a15.png',////
+                choices: [
+                    { value: 'N', displayText: '考えた' },
+                ],
+                userAnswers: [] 
+            },
+            {
+                image: 'images/q16.png',////
+                answers: ['A'], 
+                explanationText: 'Secure Shell = SSH',
+                explanationImage: 'images/a16.png',////
+                choices: [
+                    { value: 'A', displayText: ' Router(config)#hostname R15 -<br>R15(config)#ip domain-name cisco.com<br>R15(config)#crypto key generate rsa general-keys modulus 1024<br><br>R15(config)#ip ssh version 2 -<br><br>R15(config-line)#line vty 0 15 -<br>R15(config-line)# transport input ssh' },
+                    { value: 'B', displayText: ' Router(config)#crypto key generate rsa general-keys modulus 1024<br><br>Router(config)#ip ssh version 2 -<br>Router(config-line)#line vty 015<br>Router(config-line)# transport input ssh<br>Router(contig)#ip ssh logging events<br>R15(config)#ip ssh stricthostkeycheck' },
+                    { value: 'C', displayText: 'Router(config)#hostname R15 -<br>R15(config)#crypto key generate rsa general-keys modulus 1024<br><br>R15(config-line)#line vty 0 15 -<br>R15(config-line)# transport input ssh<br>R15(config)#ip ssh source-interface Fa0/0<br>R15(config)#ip ssh stricthostkeycheck' },
+                    { value: 'D', displayText: 'Router(config)#ip domain-name cisco.com<br>Router(config)#crypto key generate rsa general-keys modulus 1024<br><br>Router(contig)#ip ssh version 2 -<br>Router(config-line)#line vty 0 15<br>Router(config-line)# transport input all<br>Router(config)#ip ssh logging events' }
+                ],
+                userAnswers: [] 
+            },
+            {
+                image: 'images/q17.png',////
+                answers: ['A', 'C'], 
+                explanationText: '',
+                explanationImage: 'images/a17.png',////
+                choices: [
+                    { value: 'A', displayText: 'no ip name-serveer 198.51.100.210' },
+                    { value: 'B', displayText: 'no login local' },
+                    { value: 'C', displayText: 'no service password-encryption' },
+                    { value: 'D', displayText: 'no ip domain mame ccna.cisco.com' },
+                    { value: 'E', displayText: 'no hostname CPE' }, 
+               ],
+                userAnswers: [] 
+            },
+            {
+                image: 'images/q18.png',////
+                answers: ['B', 'C'], 
+                explanationText: '',
+                explanationImage: 'images/a18.png',////
+                choices: [
+                    { value: 'A', displayText: 'bursting' },
+                    { value: 'B', displayText: 'dropping' },
+                    { value: 'C', displayText: 'remarking' },
+                    { value: 'D', displayText: 'fragmentation' },
+                    { value: 'E', displayText: 'buffering' }, 
+               ],
+                userAnswers: [] 
+            },
+            {
+                image: 'images/q19.png',////
+                answers: ['A', 'D'], 
+                explanationText: '',
+                explanationImage: 'images/a19.png',////
+                choices: [
+                    { value: 'A', displayText: 'authoritative' },
+                    { value: 'B', displayText: 'web' },
+                    { value: 'C', displayText: ' file transfer' },
+                    { value: 'D', displayText: 'resolver' },
+                    { value: 'E', displayText: 'ESX host' }, 
+               ],
+                userAnswers: [] 
+            },
+            {
+                image: 'images/q20.png',////
+                answers: ['D'], 
+                explanationText: '',
+                explanationImage: 'images/a20.png',////
+                choices: [
+                    { value: 'A', displayText: 'ポリシーベースのルーティングが有効になります。' },
+                    { value: 'B', displayText: '動的なフロー識別が可能になります。' },
+                    { value: 'C', displayText: 'ベストエフォート型のサービスを提供します。' },
+                    { value: 'D', displayText: ' 帯域幅の使用を制限します。' }
+                ],
+                userAnswers: [] 
+            },
+            {
+                image: 'images/q21.png',////
+                answers: ['D'], 
+                explanationText: '',
+                explanationImage: 'images/a21.png',////
+                choices: [
+                    { value: 'A', displayText: 'logging trap 5' },
+                    { value: 'B', displayText: 'logging trap 2' },
+                    { value: 'C', displayText: 'logging trap 3' },
+                    { value: 'D', displayText: 'logging trap 4' }
+                ],
+                userAnswers: [] 
+            },
+            {
+                image: 'images/q22.png',////
+                answers: ['N'], 
+                explanationText: 'ドラックドロップは別のサイトで',
+                explanationImage: '',////
+                choices: [
+                    { value: 'N', displayText: '考えた' },
+                ],
+                userAnswers: [] 
+            },
+            {
+                image: 'images/q23.png',////
+                answers: ['B'], 
+                explanationText: '',
+                explanationImage: 'images/a23.png',////
+                choices: [
+                    { value: 'A', displayText: 'コンソール' },
+                    { value: 'B', displayText: 'Telnet' },
+                    { value: 'C', displayText: 'SSH' },
+                    { value: 'D', displayText: 'HTTPS' }
+                ],
+                userAnswers: [] 
+            },
+            {
+                image: 'images/q24.png',////
+                answers: ['B'], 
+                explanationText: '',
+                explanationImage: 'images/a24.png',////
+                choices: [
+                    { value: 'A', displayText: 'R1(config)#username admin -<br>R1(config-if)#line vty 0 4 -<br>R1(config-line)#password p@ss1234<br>R1(config-line)#transport input telnet' },
+                    { value: 'B', displayText: 'R1(config)#username admin privilege 15 secret p@ss1234<br><br>R1(config-if)#line vty 0 4 -<br>R1(config-line)#login local' },
+                    { value: 'C', displayText: 'R1(config)#username admin secret p@ss1234<br><br>R1(config-if)#line vty 0 4 -<br><br>R1(config-line)#login local -<br>R1(config)#enable secret p@ss1234' },
+                    { value: 'D', displayText: 'R1(config)#username admin -<br><br>R1(config-if)#line vty 0 4 -<br>R1(config-line)#password p@ss1234' }
+                ],
+                userAnswers: [] 
+            },
+            {
+                image: 'images/q25.png',////
+                answers: ['B'], 
+                explanationText: '',
+                explanationImage: 'images/a25.png',////
+                choices: [
+                    { value: 'A', displayText: 'PEAP' },
+                    { value: 'B', displayText: 'TKIP' },
+                    { value: 'C', displayText: 'AES' },
+                    { value: 'D', displayText: 'EAP' }
+                ],
+                userAnswers: [] 
+            },
+            {
+                image: 'images/q26.png',////
+                answers: ['C'], 
+                explanationText: '注・サイトによってはB・Cで回答が割れている',
+                explanationImage: 'images/a26-2.png',////
+                choices: [
+                    { value: 'A', displayText: 'ルーターは、ソース IP の最後のオクテットが 0 に設定された Serial0 へのすべての受信トラフィックを受け入れます。' },
+                    { value: 'B', displayText: '許可コマンドが失敗し、エラー コードが返されます。' },
+                    { value: 'C', displayText: 'ルータがインターフェイスにアクセス リストを適用できません。' },
+                    { value: 'D', displayText: 'IP 範囲 10.0.0.0 ～ 10.0.0.255 からの送信元トラフィックは Serial0 で許可されます。' }
+                ],
+                userAnswers: [] 
+            },
+            {
+                image: 'images/q27.png',////
+                answers: ['N'], 
+                explanationText: 'ドラックドロップは別のサイトで',
+                explanationImage: 'images/a27.png',////
+                choices: [
+                    { value: 'N', displayText: '考えた' },
+                ],
+                userAnswers: [] 
+            },
+            {
+                image: 'images/q28.png',////
+                answers: ['B'], 
+                explanationText: '',
+                explanationImage: 'images/a28.png',////
+                choices: [
+                    { value: 'A', displayText: 'A' },
+                    { value: 'B', displayText: 'B' },
+                    { value: 'C', displayText: 'C' },
+                    { value: 'D', displayText: 'D' }
+                ],
+                userAnswers: [] 
+            },
+            {
+                image: 'images/q29.png',////
+                answers: ['A'], 
+                explanationText: '',
+                explanationImage: 'images/a29.png',////
+                choices: [
+                    { value: 'A', displayText: '不正なユーザーによるアクセスを許可するためにコンピュータにインストールされる悪意のあるコード' },
+                    { value: 'B', displayText: '他の悪意のあるプログラムを起動するために使用される悪意のあるプログラム' },
+                    { value: 'C', displayText: 'ユーザーのマシンに感染し、そのマシンを使用してスパムを送信する悪意のあるコード' },
+                    { value: 'D', displayText: '他の悪意のあるコードをダウンロードすることを主な目的とする悪意のあるコード' }
+                ],
+                userAnswers: [] 
+            },
+            {
+                image: 'images/q30.png',////
+                answers: ['B'], 
+                explanationText: '',
+                explanationImage: 'images/a30.png',////
+                choices: [
+                    { value: 'A', displayText: 'WPA および WPA2 との下位互換性' },
+                    { value: 'B', displayText: 'SAE によるブルート フォース攻撃に対する保護策' },
+                    { value: 'C', displayText: 'セキュリティの強化と複雑な構成の要件' },
+                    { value: 'D', displayText: 'オプションの保護された管理フレームのネゴシエーション' }
+                ],
+                userAnswers: [] 
+            },
+            {
+                image: 'images/q31.png',////
+                answers: ['A'], 
+                explanationText: '',
+                explanationImage: 'images/a31.png',////
+                choices: [
+                    { value: 'A', displayText: 'service password-encryption' },
+                    { value: 'B', displayText: 'enable password encryption' },
+                    { value: 'C', displayText: 'enable secret' },
+                    { value: 'D', displayText: 'password encryption' }
+                ],
+                userAnswers: [] 
+            },
+            {
+                image: 'images/q32.png',////
+                answers: ['C'], 
+                explanationText: '',
+                explanationImage: 'images/a32.png',////
+                choices: [
+                    { value: 'A', displayText: 'username CCUser privilege 10 password NA!2$cc' },
+                    { value: 'B', displayText: 'username CCUser privilege 15 password NA!2$cc<br>enable secret 0 NA!2$cc' },
+                    { value: 'C', displayText: 'username CCUser secret NA!2Sce' },
+                    { value: 'D', displayText: 'username CCUser password NA!2$cc<br>enable password level 5 NA!2$cc' }
+                ],
+                userAnswers: [] 
+            },
+            {
+                image: 'images/q33.png',////
+                answers: ['A', 'E'], 
+                explanationText: '',
+                explanationImage: 'images/a33.png',////
+                choices: [
+                    { value: 'A', displayText: 'SW(config-if)#switchport port-security violation restrict' },
+                    { value: 'B', displayText: 'SW(config-if)#switchport port-security mac-address 0010.7B84.45E6' },
+                    { value: 'C', displayText: 'SW(config-if)#switchport port-security maximum 2' },
+                    { value: 'D', displayText: 'SW(config-if)#switchport port-security violation shutdown' },
+                    { value: 'E', displayText: 'SW(config-if)#switchport port-security mac-address sticky' }, 
+               ],
+                userAnswers: [] 
+            },
+            {
+                image: 'images/q34.png',////
+                answers: ['C'], 
+                explanationText: '',
+                explanationImage: 'images/a34.png',////
+                choices: [
+                    { value: 'A', displayText: '侵入検知' },
+                    { value: 'B', displayText: 'ネットワーク認証' },
+                    { value: 'C', displayText: '物理的アクセス制御' },
+                    { value: 'D', displayText: 'ユーザーの意識' }
+                ],
+                userAnswers: [] 
+            },
+            {
+                image: 'images/q35.png',////
+                answers: ['C', 'E'], 
+                explanationText: '',
+                explanationImage: 'images/a35.png',////
+                choices: [
+                    { value: 'A', displayText: '3DES' },
+                    { value: 'B', displayText: 'AES' },
+                    { value: 'C', displayText: 'ESP' },
+                    { value: 'D', displayText: 'TLS' },
+                    { value: 'E', displayText: 'AH' }, 
+               ],
+                userAnswers: [] 
+            },
+            {
+                image: 'images/q36.png',////
+                answers: ['A'], 
+                explanationText: '',
+                explanationImage: 'images/a36.png',////
+                choices: [
+                    { value: 'A', displayText: '!<br>conf t<br>!<br>username test1 password testpass1<br>enable secret level 15 0 Test123<br>!<br>line vty 0 15<br>login local<br>transport input telnet' },
+                    { value: 'B', displayText: '!<br>config t<br>!<br>username test1 password testpass1<br>enable password level 15 0 Test123<br>!<br>line vty 0 15<br>login local<br>transport input all' },
+                    { value: 'C', displayText: '!<br>config t<br>!<br>username test1 password testpass1<br>enable password level 1 7 Test123<br>!<br>line vty 0 15<br>accounting exec default<br>transport input all' },
+                    { value: 'D', displayText: '!<br>config t<br>!<br>username test1 password testpass1<br>enable secret level 1 0 Test123<br>!<br>line vty 0 15<br>login authentication<br>password Test123<br>transport input telnet' }
+                ],
+                userAnswers: [] 
+            },
+            {
+                "image": "images/q37.png",
+                "answers": [
+                    "B"
+                ],
+                "explanationText": "RSA暗号は公開鍵暗号方式の一つであり、暗号化と復号に異なる鍵のペア（公開鍵と秘密鍵）を使用する非対称暗号化アルゴリズムです。暗号化と復号で同じ鍵を使う対称暗号方式とは異なります。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "暗号化には事前共有キーが使用されます。"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "非対称暗号化アルゴリズムです。"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "対称復号化アルゴリズムです。"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "暗号化するには、双方が同一のキーを持っている必要があります。"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                "image": "images/q38.png",
+                "answers": [
+                    "C",
+                    "D"
+                ],
+                "explanationText": "WPA2とWPA3の主な違いは、使用される鍵長と鍵交換の方式にあります。\n\n*   **鍵長:** WPA2は標準で128ビットのAES暗号を使用しますが、WPA3は128ビットと、より強力な192ビットの暗号化（CNSA準拠）の両方をサポートします（選択肢C）。\n*   **鍵交換:** WPA2はPSK（事前共有鍵）を使用していましたが、WPA3はより安全なSAE（Simultaneous Authentication of Equals）ハンドシェイクメカニズムを採用しており、オフライン辞書攻撃などに対する保護が強化されています（選択肢D）。\n\nしたがって、CとDが正しい違いを説明しています。",
+                "explanationImage": "images/a38.png",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "WPA2 は 192 ビットのキー暗号化を使用し、WPA3 は 256 ビットのキー暗号化を必要とします。"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "WPA3 は、SAE を使用する WPA2 よりも強力な保護のために AES を使用します。"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "WPA2 は 128 ビット キー暗号化を使用し、WPA3 は 128 ビットおよび 192 ビット キー暗号化をサポートします。"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "WPA3 は、AES を使用する WPA2 よりも強力な保護のために SAE を使用します。"
+                    },
+                    {
+                        "value": "E",
+                        "displayText": "WPA3 は、TKIP を使用する WPA2 よりも強力な保護のために AES を使用します。"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                "image": "images/q39.png",
+                "answers": [
+                    "D"
+                ],
+                "explanationText": "WPA3は、Wi-Fiネットワークをより安全にするための複数のセキュリティ拡張機能を導入しています。主な機能の一つは、管理フレーム保護（Protected Management Frames: PMF）の必須化です。これにより、悪意のあるユーザーがデバイスをネットワークから切断させたり（認証解除攻撃）、通信を妨害したりする攻撃（関連付け解除攻撃）から防御できるようになりました。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "802.1x 認証と AES-128 暗号化を適用します。"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "PKI と RADIUS を使用してアクセス ポイントを識別する"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "TKIP とパケットごとのキーイングを使用する"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "認証解除および関連付け解除攻撃を防御する"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                "image": "images/q40.png",
+                "answers": [
+                    "B"
+                ],
+                "explanationText": "強力なパスワード保護を実装するためのベストプラクティスには、複雑さと長さの組み合わせが含まれます。特殊文字を含め、許可されるシステム制限の範囲内で可能な限り長いパスワードを作成することが推奨されます。これにより、パスワード推測やブルートフォース攻撃に対する耐性が大幅に向上します。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "パスワードが複雑な場合は、8 文字未満の長さを使用してください。"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "特殊文字を含めて、許可される限り長いパスワードを作成します。"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "適切な監視を確保するために、上級 IT 管理者とパスワードを共有します。"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "単一要素認証を使用して、パスワードを連絡先としてモバイル デバイスに保存します。"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                image: 'images/q41.png',////
+                answers: ['N'], 
+                explanationText: 'ドラックドロップは別のサイトで',
+                explanationImage: 'images/a41.png',////
+                choices: [
+                    { value: 'N', displayText: '考えた' },
+                ],
+                userAnswers: [] 
+            },
+            {
+                "image": "images/q42.png",
+                "answers": [
+                    "C"
+                ],
+                "explanationText": "Cisco IOSデバイスでは、ローカルデータベースのユーザーアカウントを設定するために`username`コマンドを使用します。パスワードをハッシュ化して保存する際、単なる`password`や`secret`（MD5を使用）よりも強力なアルゴリズムタイプを指定できます。`algorithm-type scrypt`を使用することで、構成可能な最も強力なパスワードハッシュアルゴリズム（scrypt）を利用してパスワードを保護できます。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "R1(config)# username engineer2 privilege 1 password 7 test2021"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "R1(config)# username engineer2 secret 4 $1$b1Ju$kZbBS1Pyh4QzwXyZ"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "R1(config)# username engineer2 algorithm-type scrypt secret test2021"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "R1(config)#username engineer2 secretpassword $1$b1Ju$kZbBS1Pyh4QzwXyZ"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                "image": "images/q43.png",
+                "answers": [
+                    "A",
+                    "B"
+                ],
+                "explanationText": "シスコは、多数の拠点間接続（ブランチオフィスなど）や大規模な導入環境において、スケーラビリティと管理の容易さを提供する技術を推奨しています。DMVPN（Dynamic Multipoint VPN）はハブアンドスポーク構成で動的なトンネル確立を可能にし、GETVPN（Group Encrypted Transport VPN）は既存のルーティングインフラストラクチャを活用して透過的な暗号化を提供します。これらは大規模環境に適したソリューションです。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "GETVPN"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "DMVPN"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "サイト間 VPN"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "クライアントレス VPN"
+                    },
+                    {
+                        "value": "E",
+                        "displayText": "IPsec リモート アクセス"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                image: 'images/q44.png',////
+                answers: ['N'], 
+                explanationText: 'ドラックドロップは別のサイトで',
+                explanationImage: 'images/a44.png',////
+                choices: [
+                    { value: 'N', displayText: '考えた' },
+                ],
+                userAnswers: [] 
+            },
+            {
+                "image": "images/q45.png",
+                "answers": [
+                    "B"
+                ],
+                "explanationText": "RSAは、暗号化と復号に異なる鍵のペア（公開鍵と秘密鍵）を使用する非対称暗号方式の代表例です。公開鍵は広く公開され、秘密鍵は所有者のみが保持します。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "暗号化には事前共有キーが使用されます。"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "公開鍵暗号方式です。"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "秘密鍵暗号化アルゴリズムです。"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "両側が同一のキーを持つ必要があります。"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                "image": "images/q46.png",
+                "answers": [
+                    "A"
+                ],
+                "explanationText": "ウイルス対策ソフトウェアは、マルウェアやその他の悪意のある攻撃から個々のコンピューターやエンドポイントデバイスを保護するために設計されたソリューションです。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "ウイルス対策ソフトウェア"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "ワイヤレスコントローラー"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "ルーター"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "Cisco DNA センター"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                "image": "images/q47.png",
+                "answers": [
+                    "A"
+                ],
+                "explanationText": "中間者攻撃は、通信当事者間の通信に第三者が割り込んで情報を盗聴・改ざんする攻撃です。これを防ぐためには、通信相手が正当な相手であることを確認する真正性（authentication）の確保が不可欠です。VPNやHTTPS、電子証明書による認証などの対策は、この認証の仕組みによって攻撃を防ぎます。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "authentication"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "anti-replay"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "authorization"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "accounting"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                "image": "images/q48.png",
+                "answers": [
+                    "B"
+                ],
+                "explanationText": "WPA2標準は、強力なセキュリティを実現するためにAdvanced Encryption Standard (AES) 暗号化アルゴリズムの使用を必須としています。AESはCCMPと呼ばれるプロトコルで使用され、それ以前の規格であるWEPやWPAで使用されていたRC4ベースのTKIPよりもはるかに高い安全性を提供します。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "RC4"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "AES"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "SHA"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "AES256"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                "image": "images/q49.png",
+                "answers": [
+                    "B"
+                ],
+                "explanationText": "Cisco IOSの拡張ACLでは、シーケンス番号（10、20、30など）を使用してエントリを管理します。新しいルールを効率的に追加するには、既存のルールの間に挿入するために適切な番号を使用します。番号を指定せずに`permit`コマンドを発行すると、デフォルトでリストの最後（通常は9999番目）に追加されます。DNSトラフィック（ドメインサービス）を許可する既存のルール30の直前または直後に新しいTCPルールを追加するには、30と40の間の番号（この場合は35）を使用するのが最も効率的な方法です。`no ip access-list`を使用してリスト全体を削除して再作成する必要はありません。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "A"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "B"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "C"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "D"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                "image": "images/q50.png",
+                "answers": [
+                    "B"
+                ],
+                "explanationText": "WPA/WPA2/WPA3には主に2つのモードがあります。「Personal」モード（またはPSKモード）は、事前共有鍵（PSK: Pre-Shared Key）を使用し、家庭や小規模オフィス向けに設計されています。「Enterprise」モードは、802.1X認証とRADIUSサーバーを使用して、より堅牢な認証を必要とする大規模組織向けです。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "Local"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "Personal"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "Enterprise"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "Client"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                "image": "images/q51.png",
+                "answers": [
+                    "A"
+                ],
+                "explanationText": "リモートアクセスを許可するには、適切なIPアドレスとワイルドカードマスクを使用して、SSH（ポート22）トラフィックを許可するアクセスリストを設定し、それをルーターのインターフェイスに適用する必要があります。送信元サブネット10.139.58.0/28は、ワイルドカードマスク0.0.0.15に対応します。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "interface FastEthernet0/0<br>ip address 10.122.49.1 255.255.255.252<br>ip access-group 110 in<br><br>ip access-list extended 110<br>permit tcp 10.139.58.0 0.0.0.15 host 10.122.49.1 eq 22"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "interface FastEthernet0/0<br>ip address 10.122.49.1 255.255.255.240<br>access-group 120 in<br><br>ip access-list extended 120<br>permit tcp 10.139.58.0 255.255.255.248 any eq 22"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "interface FastEthernet0/0<br>ip address 10.122.49.1 255.255.255.252<br>ip access-group 105 in<br><br>ip access-list standard 105<br>permit tcp 10.139.58.0 0.0.0.7 eq 22 host 10.122.49.1"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "interface FastEthernet0/0<br>ip address 10.122.49.1 255.255.255.248<br>ip access-group 10 in<br><br>ip access-list standard 10<br>permit udp 10.139.58.0 0.0.0.7 host 10.122.49.1 eq 22"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                "image": "images/q52.png",
+                "answers": [
+                    "C"
+                ],
+                "explanationText": "バッジ認証システムは、建物や特定の区画（データセンターなど）への立ち入りを制限するための物理的な障壁として機能します。これは、セキュリティプログラムにおける物理的アクセス制御の具体的な導入例です。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "ユーザーの意識"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "ユーザートレーニング"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "物理的アクセス制御"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "脆弱性の検証"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                image: 'images/q53.png',////
+                answers: ['N'], 
+                explanationText: 'ドラックドロップは別のサイトで',
+                explanationImage: 'images/a53.png',////
+                choices: [
+                    { value: 'N', displayText: '考えた' },
+                ],
+                userAnswers: [] 
+            },
+            {
+                "image": "images/q54.png",
+                "answers": [
+                    "C"
+                ],
+                "explanationText": "Cisco DNA Centerは、ネットワーク管理を自動化し、リアルタイムの洞察を提供するためにAPI（Application Programming Interface）を積極的に活用しています。これにより、管理者は個々のデバイスを手動で設定したり、データを収集したりする必要がなくなり、ネットワーク全体の管理が大幅に効率化されます。従来の管理手法では、多くの場合、手動でのデータ収集や設定作業が必要でした。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "Cisco DNA Center は安全な Web アクセスのために HTTPS を自動化し、従来のキャンパス管理では HTTP を使用します。"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "Cisco DNA Center は暗号化管理に SNMPv3 を利用し 、従来のキャンパス管理では SNMPv2 を使用します。"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "Cisco DNA Center は API を活用しており、従来のキャンパス管理では手動でデータを収集する必要があります。"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "Cisco DNA Center は、暗号化されたエントリのための SSH アクセスを自動化しており、従来のキャンパス管理には SSH がありません。"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                "image": "images/q55.png",
+                "answers": [
+                    "B"
+                ],
+                "explanationText": "Chef構成管理はプル型モデルを採用しています。管理対象デバイスにインストールされたChefエージェントが、定期的にChef Infra Serverに接続しに行きます。そして、サーバー上のクックブック（設定情報が記述されたファイル群）から、自身の役割（ロール）に応じた必要な構成情報を取得し、それを自身のシステムに適用（強制）します。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "Chef Infra Server は、構成済みのクックブックを使用して、更新を要求しているリモート デバイスに必要な構成をプッシュします。"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "デバイスにインストールされているエージェントは Chef Infra Server に接続し、必要な設定をクックブックから取得します。"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "Chef Infra Server は、構成済みのクックブックを使用して、デバイスが新しい構成を取得する時期が来たときに各リモート デバイスに警告します。"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "デバイスにインストールされているエージェントは Chef Infra Server にクエリを実行し、サーバーはクックブックから設定をプッシュすることで応答します。"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                "image": "images/q56.png",
+                "answers": [
+                    "A"
+                ],
+                "explanationText": "HTTPのPUTメソッドは、指定されたURIに格納されているデータを、リクエストのペイロードに含まれるデータで完全に置き換えるために使用されます。PUTは冪等な操作（何度実行しても結果は同じになる）であり、リソースの作成または更新に使用されます。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "宛先のデータを置き換えます。"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "これは非冪等の操作です。"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "これは読み取り専用の操作です。"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "Web サイトが表示されます。"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                "image": "images/q57.png",
+                "answers": [
+                    "D"
+                ],
+                "explanationText": "Cisco DNA Centerのネットワーク保証機能は、ストリーミングテレメトリ、syslog、NetFlow、SNMPなど、さまざまな管理プロトコルからリアルタイムで情報を収集します。これらの複数のデータポイントを自動的に相関分析し、ネットワークの健全性、パフォーマンス、セキュリティに関する実用的な洞察を提供します。これにより、従来の手動分析に比べて、問題の特定と解決までの時間を大幅に短縮できます。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "Cisco DNA Center は、YANG と NETCONF を利用してファブリック デバイスと非ファブリック デバイスのステータスを評価し、従来のキャンパス管理では CLI のみを使用します。"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "Cisco DNA Center はコントローラで管理タスクを処理してインフラストラクチャ デバイスの負荷を軽減し、従来のキャンパス管理はデータ バックボーンを使用します。"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "Cisco DNA Center はネットワーク デバイス間のセキュリティ体制を自動的に比較しますが、従来のキャンパス管理では手動での比較が必要です。"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "Cisco DNA Center は、さまざまな管理プロトコルからの情報を関連付けて洞察を取得しますが、従来のキャンパス管理では手動分析が必要です。"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                "image": "images/q58.png",
+                "answers": [
+                    "A"
+                ],
+                "explanationText": "提供されたJSONデータの中で、「warning」というテキストは`myCar`オブジェクト内の`wheels`というキーに関連付けられた配列の要素として存在します。この配列の各要素は、テキストデータである文字列（String）です。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "配列"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "オブジェクト"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "ブール値"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "文字列"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                "image": "images/q59.png",
+                "answers": [
+                    "D"
+                ],
+                "explanationText": "コントローラーベースのネットワーキングアーキテクチャにおいて、サウスバウンドAPI（Southbound API）は、ネットワークコントローラーと物理的なネットワークデバイス（ルーター、スイッチ、APなど）間の通信インターフェイスとして機能します。これにより、コントローラーはデバイスの設定、監視、制御を行います。一方、ノースバウンドAPIはコントローラーとアプリケーション間の通信に使用されます。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "コントローラーとアプリケーション間の通信を容易にする"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "アプリケーション開発者がネットワークと対話できるようにする"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "コントローラーを他の自動化およびオーケストレーション ツールと統合する"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "コントローラとネットワークハードウェア間の通信を容易にする"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                image: 'images/q60.png',////
+                answers: ['N'], 
+                explanationText: 'ドラックドロップは別のサイトで',
+                explanationImage: 'images/a60.png',////
+                choices: [
+                    { value: 'N', displayText: '考えた' },
+                ],
+                userAnswers: [] 
+            },
+            {
+                "image": "images/q61.png",
+                "answers": [
+                    "A",
+                    "C"
+                ],
+                "explanationText": "ソフトウェア定義ネットワーク（SDN）において、ノースバウンドAPIはアプリケーション層とコントローラー層の間の通信を可能にします。これらのAPIは、アプリケーション開発者がネットワークサービスを要求したり、ネットワークの状態に関する情報を取得したりできるように設計されています。一般的に使用される汎用的なAPI技術には、REST（Representational State Transfer）やSOAP（Simple Object Access Protocol）があります。OpenFlow、NETCONF、OpFlexは、主にコントローラーとネットワークデバイス間の通信に使用されるサウスバウンドAPIまたは関連プロトコルです。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "REST"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "OpenFlow"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "SOAP"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "NETCONF"
+                    },
+                    {
+                        "value": "E",
+                        "displayText": "OpFlex"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                "image": "images/q62.png",
+                "answers": [
+                    "A"
+                ],
+                "explanationText": "SDN（ソフトウェア定義ネットワーク）の主要な特徴は、制御プレーンとデータプレーンの分離です。従来のネットワークデバイスでは、ルーティングプロトコルを実行してルートテーブルを構築し、それに基づいて転送テーブル（フォワーディング情報ベース）を更新するという制御プレーンの機能も、データ転送の機能と一体になっていました。SDNアーキテクチャでは、この制御プレーンの機能が各デバイスから切り離され、一元化されたSDNコントローラーによって実行されるようになります。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "ルート テーブルの構築と転送テーブルの更新"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "データリンクフレーム内のパケットのカプセル化とカプセル化解除"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "NAT 操作中の送信元アドレスまたは宛先アドレスの変更"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "VPN リンク処理の暗号化と復号化"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                "image": "images/q63.png",
+                "answers": [
+                    "C"
+                ],
+                "explanationText": "SDN（ソフトウェア定義ネットワーク）におけるノースバウンドAPIは、ネットワークアプリケーションとSDNコントローラー間の通信を可能にします。RESTful APIは、HTTPメソッド（GET、POST、PUT、DELETEなど）を使用して、ネットワークリソース（設定やステータス）の取得、作成、更新、削除をアプリケーション側から行うための標準的なインターフェイスを提供します。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "GET、POST、PUT、および DELETE メソッドのネットワーク要素側のインターフェイス"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "SNMP GET リクエストのアプリケーション側インターフェイス"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "GET、POST、PUT、および DELETE メソッドのアプリケーション側インターフェイス"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "コントロール プレーンとデータ プレーンのネットワーク要素側インターフェイス"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                "image": "images/q64.png",
+                "answers": [
+                    "A"
+                ],
+                "explanationText": "HTTPのPUTメソッドは、特定のURIに存在する可能性のあるリソースを、リクエストボディに含まれるデータで置き換えるために使用されます。これは、ウェブ上のデータを更新するシナリオに適用されます。例えば、DNSサーバーの設定情報など、特定のネットワークリソースのレコードをリモートから更新（置き換え）する場合に利用されます。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "DNS サーバーを更新する"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "非冪等演算が必要な場合"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "Web サイトを表示する"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "読み取り専用操作が必要な場合"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                "image": "images/q65.png",
+                "answers": [
+                    "C",
+                    "D"
+                ],
+                "explanationText": "RESTful APIは、HTTPプロトコルの標準的なメソッドを使用してリソースに対するアクションを定義します。主にCRUD操作（作成、読み取り、更新、削除）に対応するメソッドが使用されます。GETはリソースの取得（読み取り）に使用され、POSTは新しいリソースの作成に使用されます。PUTはリソースの更新（または作成）、DELETEはリソースの削除に使用されます。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "REMOVE"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "REDIRECT"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "POST"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "GET"
+                    },
+                    {
+                        "value": "E",
+                        "displayText": "POP"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                "image": "images/q66.png",
+                "answers": [
+                    "C"
+                ],
+                "explanationText": "SDNの主要な目的は、ネットワーク管理を一元化し、自動化することです。各デバイスは単純なパケット転送機能に集中でき、複雑な設定や管理が不要になります。管理者は一元化されたコントローラーを通じてネットワーク全体を制御できるため、個々のデバイスの設定変更が減り、結果としてネットワーク全体の管理と運用がシンプルになります。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "データクエリをコントロールプレーンに制限する"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "コストを削減する"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "ネットワーク全体の複雑性が軽減される"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "仮想マシンの作成をデータ プレーンにオフロードする"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                "image": "images/q67.png",
+                "answers": [
+                    "D"
+                ],
+                "explanationText": "提供されたJSONスニペットは、最も外側の中括弧（`{`）が開いた状態で終わっており、閉じられていません。有効なJSONオブジェクトを完成させるためには、末尾に一致する閉じ中括弧（`}`）が必要です。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "「Cisco Devices」文字列を二重引用符（「 」）で囲みます。"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "各行の先頭にある感嘆符 (!)"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "先頭の大括弧 ( [ )"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "末尾の中括弧 ( } )"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                "image": "images/q68.png",
+                "answers": [
+                    "D"
+                ],
+                "explanationText": "SDN（ソフトウェア定義ネットワーク）におけるノースバウンドAPIは、ネットワークコントローラーの上位に位置し、アプリケーション層やオーケストレーションシステムと通信します。このインターフェイスを通じて、高度なネットワーク自動化サービスやポリシーベースの制御が実現されます。アプリケーションはノースバウンドAPIを介してネットワークリソースを要求し、コントローラーがそれを実行します。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "グローバル プロビジョニングと構成に依存します。"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "ソフトウェアをアップグレードし、ファイルを復元します。"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "設定のための分散処理をサポートします。"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "オーケストレーションおよびネットワーク自動化サービスを提供します。"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                "image": "images/q69.png",
+                "answers": [
+                    "B"
+                ],
+                "explanationText": "Ansibleインベントリは、Ansibleが管理する対象のホスト（ターゲットデバイス）のリストとそのグループ分けを定義するファイルです。通常はINI形式またはYAML形式で記述され、どのサーバーに対してどのような操作を行うかをAnsibleに指示するために不可欠な要素です。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "Ansible 内で実行される Python コードの単位"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "コマンドとタスクが実行されるターゲットデバイスを定義するファイル"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "ターゲットデバイスを管理する Ansible がインストールされたデバイス"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "YAML 形式で表現された、ターゲット デバイス上で実行するアクションのコレクション"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                image: 'images/q70.png',////
+                answers: ['N'], 
+                explanationText: 'ドラックドロップは別のサイトで',
+                explanationImage: 'images/a70.png',////
+                choices: [
+                    { value: 'N', displayText: '考えた' },
+                ],
+                userAnswers: [] 
+            },
+            {
+                "image": "images/q71.png",
+                "answers": [
+                    "D"
+                ],
+                "explanationText": "ノースバウンドAPIは、SDNアーキテクチャにおいて、SDNコントローラーの上位（ノース）に位置するネットワークアプリケーションやオーケストレーションツールと、コントローラー自身を接続するインターフェイスです。これにより、アプリケーションはネットワーク全体を抽象化された形で操作・管理できるようになります。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "グローバル プロビジョニングと構成に依存します。"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "ソフトウェアをアップグレードし、ファイルを復元します。"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "設定のための分散処理をサポートします。"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "SDN コントローラーとネットワーク アプリケーション間のパスを提供します。"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                "image": "images/q72.png",
+                "answers": [
+                    "D"
+                ],
+                "explanationText": "JSONデータにおいて、コロンの左側にある「apple」はキー（Key）を表しており、常に文字列として表現されます。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "配列"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "オブジェクト"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "番号"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "文字列"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                image: 'images/q73.png',////
+                answers: ['N'], 
+                explanationText: 'ドラックドロップは別のサイトで',
+                explanationImage: 'images/a73.png',////
+                choices: [
+                    { value: 'N', displayText: '考えた' },
+                ],
+                userAnswers: [] 
+            },
+            {
+                "image": "images/q74.png",
+                "answers": [
+                    "A",
+                    "E"
+                ],
+                "explanationText": "CRUD（Create, Read, Update, Delete）操作をRESTful APIのHTTPメソッドにマッピングする場合、UPDATE操作は主にPUTとPATCHによってサポートされます。PUTはリソース全体を指定された内容で置き換える完全更新に使用され、PATCHはリソースの部分的な更新に使用されます。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "PATCH"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "DELETE"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "GET"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "POST"
+                    },
+                    {
+                        "value": "E",
+                        "displayText": "PUT"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                "image": "images/q75.png",
+                "answers": [
+                    "A"
+                ],
+                "explanationText": "Cisco DNA Centerは、ネットワークデバイスのプロビジョニングと導入プロセス全体を自動化および一元管理するように設計されています。GUIベースの単一画面インターフェイスから、多数のデバイスに対して設定テンプレートの適用やゼロタッチプロビジョニング（PnP）などを実行できるため、従来のCLIベースの手動設定と比べて、導入にかかる時間を大幅に短縮できます。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "Cisco DNA Center は、単一画面での導入をサポートしています。"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "Cisco DNA Center は、サードパーティ デバイスにゼロタッチ プロビジョニングを提供します。"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "Cisco DNA Center は、サードパーティのアクセス ポイントおよびデバイスの分析の必要性を軽減します。"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "Cisco DNA Center は、Cisco デバイスに関するレポートを作成する際の syslog 出力のレベルを最小限に抑えます。"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                image: 'images/q76.png',////
+                answers: ['N'], 
+                explanationText: 'ドラックドロップは別のサイトで',
+                explanationImage: 'images/a76.png',////
+                choices: [
+                    { value: 'N', displayText: '考えた' },
+                ],
+                userAnswers: [] 
+            },
+            {
+                "image": "images/q77.png",
+                "answers": [
+                    "B"
+                ],
+                "explanationText": "クラウドコンピューティングにおける急速な弾力性（Rapid Elasticity）とは、ユーザーの需要や負荷の変動に応じて、コンピューティングリソース（サーバー、ストレージ、ネットワーク帯域幅など）を自動的かつ迅速にスケールアップまたはスケールダウンできる能力を指します。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "テナントによる制御と監視またはリソース消費"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "ニーズに基づいた容量の自動調整"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "ニーズに基づいてマルチテナント モデルでリソースをプールする"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "テナントによるコンピューティング リソースのセルフサービス"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                "image": "images/q78.png",
+                "answers": [
+                    "D"
+                ],
+                "explanationText": "コントローラーベースのネットワーク（SDN）において、コントローラーと物理的なネットワークデバイス間の通信を可能にするインターフェイスはサウスバウンドインターフェース（Southbound Interface）と呼ばれます。OpenFlowやNETCONF、OpFlexといったプロトコルがここで使用されます。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "ソフトウェア仮想インターフェイス"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "トンネルインターフェース"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "ノースバウンド インターフェイス"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "サウスバウンドインターフェース"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                "image": "images/q79.png",
+                "answers": [
+                    "B"
+                ],
+                "explanationText": "提供されたJSONデータは一つの大きなオブジェクトで構成されていますが、そのオブジェクト内には角括弧`[]`で囲まれた値を持つキーが3つあります。具体的には、「Test_Questions」、「Test_Exam_Level」、「Test_Response」のそれぞれのキーに対応する値が配列です。したがって、配列は3つ存在します。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "1"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "3"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "6"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "9"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                image: 'images/q80.png',////
+                answers: ['N'], 
+                explanationText: 'ドラックドロップは別のサイトで',
+                explanationImage: 'images/a80.png',////
+                choices: [
+                    { value: 'N', displayText: '考えた' },
+                ],
+                userAnswers: [] 
+            },
+            {
+                "image": "images/q81.png",
+                "answers": [
+                    "B"
+                ],
+                "explanationText": "アプリケーションプログラミングインターフェイス（API）は、異なるソフトウェアコンポーネントやアプリケーション間でデータを交換したり、特定の機能を利用したりするための取り決めやインターフェイスです。クライアント上のアプリケーションはAPIを使用してオペレーティングシステムやネットワークスタックと連携し、IPネットワーク経由でのデータ送信といった機能を実現します。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "ノースバウンド インターフェイス"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "アプリケーションプログラミングインターフェイス"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "サウスバウンドインターフェース"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "Representational State Transfer アプリケーション プログラミング インターフェイス"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                image: 'images/q82.png',////
+                answers: ['B'], 
+                explanationText: '',
+                explanationImage: 'images/a82.png',////
+                choices: [
+                    { value: 'A', displayText: '2001:db8:9aa6:6aa9:<br>C801:A6FF:FEA4:1' },
+                    { value: 'B', displayText: '2001:db8:9aa6:6aa9:<br>C081:A6FF:FF4A:1' },
+                    { value: 'C', displayText: '2001:db8:9aa6:6aa9:<br>C001:6AFE:FF00:1' },
+                    { value: 'D', displayText: '2001:db8:9aa6:6aa9:<br>4642:823F:FE47:1' }
+                ],
+                userAnswers: [] 
+            },
+            {
+                "image": "images/q83.png",
+                "answers": [
+                    "A"
+                ],
+                "explanationText": "QoS（Quality of Service）の機能のうち、ポリシング（Policing）は設定されたレート（CIR）を超えるトラフィックを即座に破棄（ドロップ）または優先度を下げてマーキングする動作をします。一方、シェーピングはトラフィックをバッファリングし、レート内に収まるように送信を遅延させる点が異なります。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "ポリシング"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "FIFO"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "シェーピング"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "重み付けされた公平なキューイング"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                "image": "images/q84.png",
+                "answers": [
+                    "A"
+                ],
+                "explanationText": "トラフィックシェーピング（Traffic Shaping）は、ネットワークトラフィックの送信レートを制御するQoSメカニズムです。設定された制限を超える過剰なトラフィックを即座に破棄するのではなく、キュー（バッファ）に一時的に保持し、トラフィックがレート制限内に収まるように送信を遅らせます。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "過剰なトラフィックをキューに入れます"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "パケット内に QoS 属性を設定します"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "トラフィックをクラスに編成する"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "パケットの QoS 属性を変更する"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                "image": "images/q85.png",
+                "answers": [
+                    "B"
+                ],
+                "explanationText": "Cisco IOSでは、`port-channel min-links`コマンドを使用して、EtherChannelが稼働状態（アップ）と見なされるために物理的にリンクアップしてバンドルされている必要がある、最小限のポート数を定義できます。デフォルトではこの値はゼロであり、たとえ1つのリンクしか残っていなくても論理インターフェイスは稼働状態を維持します。設問の要件（リンクの1つに障害が発生しても稼働状態を維持）は現在のデフォルト設定で満たされていますが、設定を明示的に適用する場合は、ポートチャネルインターフェイスモードで`port-channel min-links 1`と設定します。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "Switch1(config) # interface Fa0/0<br>Switch1(config-if) # lacp port-priority 100<br>Switch1(config) # interface Fa0/1<br>Switch1(config-if) # lacp port-priority 200"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "Switch1(config) # interface port-channel 1<br>Switch1(config-if) # port-channel min-links 1"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "Switch1(config) # interface Fa0/0<br>Switch1(config-if) # lacp port-priority 200<br>Switch1(config) # interface Fa0/1<br>Switch1(config-if) # lacp port-priority 100"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "Switch1(config) # interface port-channel 1<br>Switch1(config-if) # lacp max-bundle 1"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                "image": "images/q86.png",
+                "answers": [
+                    "A",
+                    "D"
+                ],
+                "explanationText": "Cisco Wireless LANコントローラーなどのデバイスにおけるサービスポートインターフェイスは、主に帯域外管理（アウトオブバンド管理）やシステム復旧のために使用されます。このポートでサポートされている管理プロトコルには、セキュアシェルのSSHやTelnetが含まれます。ただし、RADIUSやTACACS+のような外部AAAサーバーとの通信は、通常、サービスポートではサポートされていません。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "Telnet"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "SCP"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "TACACS+"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "SSH"
+                    },
+                    {
+                        "value": "E",
+                        "displayText": "RADIUS"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                "image": "images/q87.png",
+                "answers": [
+                    "B"
+                ],
+                "explanationText": "プライベートIPv4アドレス空間は、インターネット上でルーティングされないように設計されています。これにより、内部ネットワークのデバイスが外部のインターネットから直接アクセスされることを防ぎ、NAT（ネットワークアドレス変換）と組み合わせて使用することで、内部ネットワークのデバイスを保護するというセキュリティ上の利点があります。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "インターネット経由での安全な接続を可能にするため"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "内部ネットワークデバイスを外部アクセスから保護するため"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "同様のデバイス間で信頼性の高い接続を提供する"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "外部ネットワーク経由でルーティング可能であること"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                "image": "images/q88.png",
+                "answers": [
+                    "C"
+                ],
+                "explanationText": "業界標準のトランキングプロトコルはIEEE 802.1Q（dot1q）です。Cisco独自のISLは推奨されません。デフォルト設定のスイッチ間でトランクリンクを設定する場合、明示的に`switchport mode trunk`を設定し、カプセル化タイプを`switchport trunk encapsulation dot1q`で指定する必要があります。また、`switchport trunk allowed vlans 1-10`を使用して、許可するVLANを制限します。これは要件に最も適合する設定です。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "switchport mode dynamic<br>channel-protocol lacp<br>switchport trunk allowed vlans 1-10"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "switchport mode trunk<br>switchport trunk allowed vlans 1-10<br>switchport trunk native vlan 11"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "switchport mode trunk<br>switchport trunk encapsulation dot1q<br>switchport trunk allowed vlans 1-10"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "switchport mode dynamic desirable<br>channel-group 1 mode desirable<br>switchport trunk encapsulation isl<br>switchport trunk allowed vlan except 11-4094"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                "image": "images/q89.png",
+                "answers": [
+                    "C"
+                ],
+                "explanationText": "表示されているインターフェイス情報には、`output errors`が0である一方で、`8662416065 collisions`（コリジョン、衝突）が非常に多く発生していることが示されています。また、このインターフェイスは`Full Duplex, 10000Mbps`として設定されています。全二重（Full Duplex）モードではコリジョンは発生しないはずですが、カウンタが増加している場合、対向側のデバイスが半二重（Half Duplex）で動作している可能性が高いです。このようなデュプレックスモードの不一致が発生すると、パケットロスや再送が頻繁に起こり、結果として転送速度が極端に遅くなるという問題を引き起こします。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "速度の競合"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "キューイングドロップ"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "デュプレックスの非互換性"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "大渋滞"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                "image": "images/q90.png",
+                "answers": [
+                    "A",
+                    "D"
+                ],
+                "explanationText": "プライベート ネットワークで使用されるアドレス範囲は次のとおりです。 クラス A: 10.0.0.0 ～10.255.255.255 クラス B: 172.16.0.0 ～ 172.31.255.255 クラス C: 192.168.0.0 ～192.168.255.255。選択肢の中で、このプライベートIPアドレス範囲に該当するのは10.172.76.200と172.31.255.100です。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "10.172.76.200"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "12.17.1.20"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "172.15.2.250"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "172.31.255.100"
+                    },
+                    {
+                        "value": "E",
+                        "displayText": "192.169.32.10"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                "image": "images/q91.png",
+                "answers": [
+                    "A"
+                ],
+                "explanationText": "",
+                "explanationImage": "images/a91.png",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "ipv6 address 2001:DB8:D8D2:1009:<br>10A0:ABFF:FECC:1 eui-64"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "ipv6 address 2001:DB8:D8D2:1009:<br>1230:ABFF:FECC:1 eui-64"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "ipv6 address 2001:DB8:D8D2:1009:<br>4347:31FF:FF47:0 eui-64"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "ipv6 address 2001:DB8:D8D2:1009:<br>12A0:AB34:FFCC:1 eui-64"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                "image": "images/q92.png",
+                "answers": [
+                    "B",
+                    "D"
+                ],
+                "explanationText": "PortFastを設定する主な理由は、ホストの起動や再接続時に、スパニングツリープロトコルのリスニングおよびラーニング状態をスキップして、ポートをすぐに転送状態に移行させることです。これにより、デバイスの起動時間が短縮されます。また、PortFastを有効にすることで、ポートがトポロジ変更通知（TCN）プロセスに関与しないようにし、ネットワーク全体の安定性を保護します。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "別のスイッチまたはホストがポートを介して通信するのをブロックする"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "ホストの起動時にポートがただちにフォワーディング ステートに移行できるようにする"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "ポートがスパニング ツリー プロトコルの動作に参加できないようにするため"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "トポロジ変更プロセスからポートの動作を保護するため"
+                    },
+                    {
+                        "value": "E",
+                        "displayText": "ポート上で学習される MAC アドレスの数を 1 に制限します。"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                image: 'images/q93.png',////
+                answers: ['S'], 
+                explanationText: '',
+                explanationImage: 'images/a93.png',////
+                choices: [
+                    { value: 'S', displayText: '考えた' },
+                ],
+                userAnswers: [] 
+            },
+            {
+                "image": "images/q94.png",
+                "answers": [
+                    "B"
+                ],
+                "explanationText": "syslogプロトコルでは、メッセージはその重要度（severity level、または単にレベル）に基づいて分類されます。ネットワーク管理者は、このレベルをフィルタリング基準として使用することで、緊急メッセージやエラーメッセージのみを特定のファイルに記録するなど、重要度に応じてメッセージを分類・処理できます。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "メッセージ本文"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "レベル"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "ファシリティ"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "プロセス ID"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                image: 'images/q95.png',////
+                answers: ['S'], 
+                explanationText: '',
+                explanationImage: 'images/a95.png',////
+                choices: [
+                    { value: 'S', displayText: '考えた' },
+                ],
+                userAnswers: [] 
+            },
+            {
+                "image": "images/q96.png",
+                "answers": [
+                    "B"
+                ],
+                "explanationText": "Cisco Wireless LANコントローラー（WLC）において、管理インターフェイスは、コントローラーのインバンド管理や、コントローラーとアクセスポイント間のCAPWAP通信、AAAサーバーへの接続などのデフォルトインターフェイスとなります。サービスポートは通常、アウトオブバンド管理やシステム復旧のためのポートであり、AP管理トラフィックには使用されません。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "コンソールポート"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "管理インターフェース"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "仮想インターフェース"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "サービスポート"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                "image": "images/q97.png",
+                "answers": [
+                    "C"
+                ],
+                "explanationText": "Ciscoルーターでは、宛先ネットワークとサブネットマスクが同一で、管理ディスタンス（AD）とメトリックも同一の複数のスタティックルートが設定されている場合、デフォルトで等コストマルチパス（ECMP）ロードバランシングが実行されます。デフォルトルート（0.0.0.0 0.0.0.0）をISP1とISP2のネクストホップアドレスに向けてそれぞれ設定すると、両方のルートがルーティングテーブルにインストールされ、トラフィックはデフォルトでフロー単位（送信元IPと宛先IPのペアごと）で分散されます。そのため、単純に2つのデフォルトスタティックルートを設定すれば要件を満たします。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "ip route 0.0.0.0 0.0.0.0 198.51.100.1 255<br>ip route 0.0.0.0 0.0.0.0 203.0.113.1 255<br>ip route 128.0.0.0 128.0.0.0 203.0.113.1"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "ip route 0.0.0.0 128.0.0.0 198.51.100.1<br>ip route 128.0.0.0 128.0.0.0 203.0.113.1<br>ip route 0.0.0.0 0.0.0.0 198.51.100.1<br>ip route 0.0.0.0 0.0.0.0 203.0.113.1"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "ip route 0.0.0.0 0.0.0.0 198.51.100.1<br>ip route 0.0.0.0 0.0.0.0 203.0.113.1"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "ip route 0.0.0.0 128.0.0.0 198.51.100.1<br>ip route 128.0.0.0 128.0.0.0 203.0.113.1"
+                    },
+                    {
+                        "value": "E",
+                        "displayText": "ip route 0.0.0.0 0.0.0.0 198.51.100.1<br>ip route 0.0.0.0 0.0.0.0 203.0.113.1 2"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                "image": "images/q98.png",
+                "answers": [
+                    "C"
+                ],
+                "explanationText": "画像に示されている既存のEtherChannelグループ2は、Cisco独自のプロトコルであるPAGPを使用しています。別のベンダーのスイッチと互換性のあるEtherChannelを確立するには、業界標準のプロトコルであるLACP（Link Aggregation Control Protocol）を使用する必要があります。LACPを有効にするには、ポートインターフェイスで`channel-group 2 mode active`または`mode passive`のいずれかを設定する必要があります。提供された選択肢の中で、インターフェイスレベルでLACPを有効にする適切なコマンドは`mode active`です。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "interface port-channel 2<br>channel-group 2 mode desirable"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "interface fastethernet 1/1<br>channel-group 2 mode on"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "interface fastethernet 1/1<br>channel-group 2 mode active"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "interface port-channel 2<br>channel-group 2 mode auto"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                "image": "images/q99.png",
+                "answers": [
+                    "A",
+                    "E"
+                ],
+                "explanationText": "仮想マシンの主な特性は、単一の物理ハードウェアリソースを共有しながら、複数の独立した実行環境を提供することです。これにより、複数の仮想マシンが同じ基盤ハードウェア上で動作することが可能になります。また、ハイパーバイザーによって各仮想マシンは互いに分離されているため、ある仮想マシンのクラッシュや問題が、同じハイパーバイザー上の他の仮想マシンの動作に影響を与えることはありません。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "複数の VM が同じ基盤ハードウェア上で動作する"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "各 VM オペレーティング システムはハイパーバイザーに依存します"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "ハイパーバイザー上の VM は他の VM に自動的に相互接続されます"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "個々のハイパーバイザー上の VM はリソースを均等に共有します"
+                    },
+                    {
+                        "value": "E",
+                        "displayText": "各VM は同じハイパーバイザー内の他の VM から独立して実行されます。"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                "image": "images/q100.png",
+                "answers": [
+                    "A"
+                ],
+                "explanationText": "Cisco Wireless LAN Controller (WLC) でLAGを使用する場合、スイッチ側のEtherChannelロードバランシングモードは、通常、送信元と宛先のMACアドレスの組み合わせ（src-dst-mac）が推奨されます。これにより、WLCへのトラフィックが複数の物理ポート間で効果的に分散され、セッションの継続性を維持しつつ負荷分散を実現できます。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "送信元と宛先の IP アドレス"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "宛先 IP アドレス"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "宛先 MAC アドレス"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "送信元と宛先の MAC アドレス"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                "image": "images/q101.png",
+                "answers": [
+                    "D"
+                ],
+                "explanationText": "802.11aは5GHz帯の周波数を使用し、利用可能な非重複チャネル（干渉しないチャネル）が多く提供されます。そのため、多数のアクセスポイントを近接して設置する場合や、チャネル干渉を避けたい場合に、2.4GHz帯を使用する802.11b/gの代わりとして選択されます。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "低コストのソリューションが必要な場合は、802.11b よりも選択されます。"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "電子レンジなどの 2.4 GHz 機器からの干渉を受けやすい"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "802.11b および 802 11g 準拠のワイヤレス デバイスと互換性があります。"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "多くの非重複チャネルが必要な場合に、802.11b/g の代わりに使用されます。"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                "image": "images/q102.png",
+                "answers": [
+                    "A"
+                ],
+                "explanationText": "提示された構成の中で、トランクモードを使用し、dot1qカプセル化を有効にし、VLAN 100と105を許可し、かつセキュリティポリシーに従ってデフォルト以外のネイティブVLAN (VLAN 3) を設定しているのは、Option Aのみです。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "Switch(config-if)#switchport mode trunk<br>Switch(config-if)#switchport trunk encapsulation dot1q<br>Switch(config-if)#switchport trunk allowed vlan 100,105<br>Switch(config-if)#switchport trunk native vlan 3"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "Switch(config-if)#switchport mode trunk<br>Switch(config-if)#switchport trunk encapsulation isl<br>Switch(config-if)#switchport trunk allowed vlan 100,105<br>Switch(config-if)#switchport trunk native vlan 1"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "Switch(config-if)#switchport mode dynamic<br>Switch(config-if)#switchport access vlan 100,105<br>Switch(config-if)#switchport trunk native vlan 1"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "Switch(config-if)#switchport mode access<br>Switch(config-if)#switchport trunk encapsulation dot1q<br>Switch(config-if)#switchport access vlan 100,105<br>Switch(config-if)#switchport trunk native vlan 3"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                "image": "images/q103.png",
+                "answers": [
+                    "D"
+                ],
+                "explanationText": "IEEE標準のサポートとは、トランクポートのカプセル化方式としてIEEE 802.1Q（dot1q）を使用することを意味します。ISLはシスコ独自のプロトコルです。既存のISL設定を無効にし、dot1qに変更する必要があります。また、VLAN 20を追加するには、「switchport trunk allowed vlan add 20」コマンドを使用して、既存の許可VLANリストにVLAN 20を追記します。「switchport trunk allowed vlan 5,10,15,20」のようにリスト全体を再指定するコマンドは、既存の設定を上書きしてしまう可能性があります。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "switch port mode dynamic<br>channel group 1 mode active<br>switchport trunk allowed vlan 5,10,15, 20"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "no switchport mode trunk<br>switchport trunk encapsulation isl<br>switchport mode access vlan 20"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "switchport nonegotiate<br>no switchport trunk allowed vlan 5,10<br>switchport trunk allowed vlan 5,10,15,20"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "no switchport trunk encapsulation isl<br>switchport trunk encapsulation dot1q<br>switchport trunk allowed vlan add 20"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                image: 'images/q104.png',////
+                answers: ['S'], 
+                explanationText: '',
+                explanationImage: 'images/a104.png',////
+                choices: [
+                    { value: 'S', displayText: '考えた' },
+                ],
+                userAnswers: [] 
+            },
+            {
+                "image": "images/q105.png",
+                "answers": [
+                    "A"
+                ],
+                "explanationText": "show etherchannel summaryコマンドの出力結果から、既存のPort-Channel 1はLACPプロトコルを使用してLayer 2（Sフラグ）で稼働しており、インターフェイスEt0/0とEt0/1がメンバーポートとして含まれている（Pフラグ）ことが分かります。新しいインターフェイスをこのLACPチャネルに追加するには、既存のポートと同じ設定（LACPアクティブモード、レイヤ2ポート）を適用する必要があります。Option Aは、「no switchport」コマンド（インターフェイスをレイヤ3からレイヤ2に変更）と「channel group 1 mode active」（LACPアクティブモード）を含んでおり、既存のLACP設定に適合します。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "no switchport<br>channel group 1 mode active"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "no switchport<br>channel-group 1 mode on"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "switchport mode trunk<br>channel-group 1 mode active"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "switchport<br>switchport mode trunk"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                image: 'images/q106.png',////
+                answers: ['S'], 
+                explanationText: '',
+                explanationImage: 'images/a106.png',////
+                choices: [
+                    { value: 'S', displayText: '考えた' },
+                ],
+                userAnswers: [] 
+            },
+            {
+                "image": "images/q107.png",
+                "answers": [
+                    "A"
+                ],
+                "explanationText": "イーサネットの半二重通信において、信号の衝突（コリジョン）が発生した場合、送信デバイスは最大16回まで再送信を試みます。ログメッセージの「Excessive collisions」および「Retry limit exceeded」は、この制限に達したことを示しており、プロトコルの仕様によりフレームが破棄（ドロップ）されます。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "送信試行が 16 回失敗するとフレームがドロップされる"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "内部送信バッファが過負荷になっている"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "64 バイト未満のフレームを大量に受信する"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "1518 バイトを超える過剰な数のフレームが受信される"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                "image": "images/q108.png",
+                "answers": [
+                    "A"
+                ],
+                "explanationText": "異なるベンダー間のスイッチ接続では、業界標準であるIEEE 802.1Q（dot1q）カプセル化を使用する必要があります。これにより、VLANトラフィックが正しく通過できるようになります。ISLはシスコ独自のプロトコルのため、異なるベンダー間では通常使用できません。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "switchport mode trunk<br>switchport trunk encapsulation dot1q"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "switchport mode trunk<br>switchport trunk allowed vlan all<br>switchport dot1q ethertype 0800"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "switchport mode dynamic desirable<br>switchport trunk allowed vlan all<br>switchport trunk native vlan 7"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "switchport dynamic auto<br>switchport nonegotiate"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                "image": "images/q109.png",
+                "answers": [
+                    "A"
+                ],
+                "explanationText": "音声VLANがポートに設定されている場合、ポートセキュリティ設定において特定のVLAN ID（この場合はVLAN 4）を直接指定してMACアドレスと関連付けるコマンドが一般的に使用されます。これにより、指定されたMACアドレスが、ポートに設定されている音声VLANに属するセキュアMACアドレスとして登録されます。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "switchport port-security mac-address abcd.abcd.abcd vlan 4"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "switchport port-security mac-address abcd.abcd.abcd vlan voice"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "switchport port-security mac-address abcd.abcd.abcd"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "switchport port-security mac-address sticky abcd.abcd.abcd vlan 4"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                image: 'images/q110.png',////
+                answers: ['S'], 
+                explanationText: '',
+                explanationImage: 'images/a110.png',////
+                choices: [
+                    { value: 'S', displayText: '考えた' },
+                ],
+                userAnswers: [] 
+            },
+            {
+                image: 'images/q111.png',////
+                answers: ['S'], 
+                explanationText: '',
+                explanationImage: 'images/a111.png',////
+                choices: [
+                    { value: 'S', displayText: '考えた' },
+                ],
+                userAnswers: [] 
+            },
+            {
+                image: 'images/q112.png',////
+                answers: ['S'], 
+                explanationText: '',
+                explanationImage: 'images/a112.png',////
+                choices: [
+                    { value: 'S', displayText: '考えた' },
+                ],
+                userAnswers: [] 
+            },
+            {
+                image: 'images/q113.png',////
+                answers: ['S'], 
+                explanationText: '',
+                explanationImage: 'images/a113.png',////
+                choices: [
+                    { value: 'S', displayText: '考えた' },
+                ],
+                userAnswers: [] 
+            },
+            {
+                "image": "images/q114.png",
+                "answers": [
+                    "A"
+                ],
+                "explanationText": "JSON形式において、「LB20」という文字列は、キーである「load balancer」に対応する値（バリュー）として表現されています。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "値"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "配列"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "オブジェクト"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "キー"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                "image": "images/q115.png",
+                "answers": [
+                    "C"
+                ],
+                "explanationText": "1行目の開き角括弧「[」から5行目の閉じ角括弧「]」で囲まれた範囲は、複数のJSONオブジェクトを順序付けて格納するデータ構造であり、JSONの配列（アレイ）として定義されます。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "キー"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "オブジェクト"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "配列"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "値"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                "image": "images/q116.png",
+                "answers": [
+                    "D"
+                ],
+                "explanationText": "JSON形式において、コロン「:」の左側にある「\"IDS\"」という単語は、その後に続く値「\"IPS31\"」を識別するためのキーとして機能しています。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "オブジェクト"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "値"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "配列"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "キー"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                "image": "images/q117.png",
+                "answers": [
+                    "A"
+                ],
+                "explanationText": "JSON形式において、波括弧「{」から「}」で囲まれた範囲は、プロパティ名（キー）と値のペアをコレクションとして格納するデータ構造であり、オブジェクトとして定義されます。4行目は一つの完全なオブジェクトを表しています。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "オブジェクト"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "配列"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "キー"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "値"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                "image": "images/q118.png",
+                "answers": [
+                    "A"
+                ],
+                "explanationText": "JSON形式において、コロン「:」の左側にある「\"port\"」という単語は、その後に続く値（\"te6/21\"など）を識別するためのキーとして機能しています。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "キー"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "値"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "配列"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "オブジェクト"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                "image": "images/q119.png",
+                "answers": [
+                    "D"
+                ],
+                "explanationText": "リンクアグリゲーション（またはイーサチャネル、LACP）は、複数の物理リンクを論理的に1つのリンクとして束ねる技術です。これにより、リンクの冗長性が提供され（1本のリンクが切れても通信が維持される）、合計帯域幅が増加し、トラフィックの負荷分散が可能になります。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "ファーストホップ冗長化"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "VLAN トランキング"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "トンネリング"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "リンクアグリゲーション"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                image: 'images/q120.png',////
+                answers: ['N'], 
+                explanationText: '',
+                explanationImage: 'images/a120.png',////
+                choices: [
+                    { value: 'N', displayText: '考えた' },
+                ],
+                userAnswers: [] 
+            },
+            {
+                "image": "images/q121.png",
+                "answers": [
+                    "C"
+                ],
+                "explanationText": "ルータは、宛先ネットワークへの複数のルート候補がある場合、最も低い管理ディスタンス（AD）を持つルートを選択します。表示されたルートのうち、D（EIGRP）のADは90、R（RIP）のADは120です。AD 90を持つルートが優先されます。AD 90のルートが2つある場合（F0/12経由とF0/5経由）、次にメトリック（コスト）を比較します。F0/12経由のメトリックは6881、F0/5経由のメトリックは43618です。メトリックが低い（コストが安い）F0/12経由のルートが最終的に選択されます。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "F0/5"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "F0/6"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "F0/12"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "F0/9"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                "image": "images/q122.png",
+                "answers": [
+                    "D"
+                ],
+                "explanationText": "SSID（Service Set Identifier）は、特定の無線LAN（WLAN）を識別するための名前です。クライアントデバイスは、接続したいネットワークをこのSSIDによって識別し、選択します。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "WLAN 上の個々のアクセス ポイントを識別します。"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "アクセス ポイントに入るトラフィックを区別します。"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "ネットワーク セキュリティを提供します。"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "WLAN を識別します。"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                "image": "images/q123.png",
+                "answers": [
+                    "D",
+                    "E"
+                ],
+                "explanationText": "ソーシャルエンジニアリングとは、技術的な脆弱性ではなく、人間の心理的な隙や行動のミスを悪用して機密情報などを詐取する手法全般を指します。「pharming（ファーミング）」は、ユーザーを偽のウェブサイトへ誘導し情報を盗み取る手口で、メールなどの「おとり」を必要としない高度な手法ですが、ソーシャルエンジニアリングの一種とされています。「phishing（フィッシング）」は、偽のメールやメッセージを使ってユーザーを騙し、個人情報などを入力させる最も一般的な手口です。これら二つは、人を騙すという点でソーシャルエンジニアリングに分類されます。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "phoning"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "malvertising"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "probing"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "pharming"
+                    },
+                    {
+                        "value": "E",
+                        "displayText": "phishing"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                image: 'images/q124.png',////
+                answers: ['S'], 
+                explanationText: '',
+                explanationImage: 'images/a124.png',////
+                choices: [
+                    { value: 'S', displayText: '考えた' },
+                ],
+                userAnswers: [] 
+            },
+            {
+                "image": "images/q125.png",
+                "answers": [
+                    "A"
+                ],
+                "explanationText": "SDN（Software Defined Networking）のアーキテクチャにおいて、サウスバウンドAPI（Southbound API、SBI）は、SDNコントローラと物理的または仮想的なネットワークデバイス（スイッチ、ルータ、アクセスポイントなど）の間の通信を可能にする役割を果たします。 コントローラはこれらのAPI（OpenFlowやNETCONFなど）を使用して、データ転送のルールや設定をネットワークデバイスに指示・プログラムします。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "コントローラとネットワーク デバイス間の通信を可能にします。"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "管理プレーンと通信します。"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "HTTP メッセージを使用して通信します。"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "コントローラーから SDN アプリケーションに情報を伝達します。"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                "image": "images/q126.png",
+                "answers": [
+                    "D"
+                ],
+                "explanationText": "OSPFのDR（指定ルータ）選出プロセスでは、まずOSPFプライオリティ値が最も高いルータが選ばれます。プライオリティが等しい場合は、Router ID（RID）が最も高いルータが選ばれます。すべてのデバイスが同時に起動した場合、R4のプライオリティ値（204）が他のどのルータよりも高いため、R4がDRとして選出されます。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "R1"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "R2"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "R3"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "R4"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                "image": "images/q127.png",
+                "answers": [
+                    "B"
+                ],
+                "explanationText": "CiscoルーターのDHCPプール設定において、「default-router」コマンドは、DHCPクライアントに配布されるデフォルトゲートウェイのIPアドレスを指定するために使用されます。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "DNS server"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "default router"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "ip helper address"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "default gateway"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                "image": "images/q128.png",
+                "answers": [
+                    "A",
+                    "B"
+                ],
+                "explanationText": "企業内のファイアウォールは、ネットワークセキュリティポリシーに基づいてトラフィックを制御・監視する役割を担います。一般的な機能として、特定のURLやFQDNに基づいたトラフィックの許可・拒否（URLフィルタリング）があります。また、ファイアウォールは、サイト間VPN（拠点間VPN）を終端するエンドポイントデバイスとしても機能します。これにより、企業拠点間で暗号化された安全な通信チャネルを確立します。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "URL に基づいたトラフィック フィルタリングが有効になります。"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "スタンドアロン モードでサイト間 VPN のエンドポイントとして機能します。"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "マルチ コンテキスト モードでのリモート アクセス VPN のエンドポイントとしてのサポートを提供します。"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "ホスト間にレイヤー 2 サービスを提供します。"
+                    },
+                    {
+                        "value": "E",
+                        "displayText": "ワイヤレス デバイスがネットワークに接続できるようにします。"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                "image": "images/q129.png",
+                "answers": [
+                    "B"
+                ],
+                "explanationText": "Cisco Wireless LAN Controller（WLC）は、デフォルトで最大5つの同時Telnetセッションをサポートしています。この制限は、一部のIOSを搭載したルータやスイッチで設定可能なVTY回線数（最大16セッション）とは異なり、WLC固有のデフォルト設定値です。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "3"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "5"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "6"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "15"
+                    }
+                ],
+                "userAnswers": []
+            },
+            {
+                "image": "images/q130.png",
+                "answers": [
+                    "A"
+                ],
+                "explanationText": "クライアントが同じSSIDを使用するネットワーク内で、現在接続しているアクセスポイントから別のアクセスポイントへ移動（ローミング）する際、クライアントは新しいアクセスポイントに対して「再関連付けリクエスト（Reassociation Request）」管理フレームを送信します。これにより、既存のセッションを維持したまま、接続先を切り替えることができます。",
+                "explanationImage": "",
+                "choices": [
+                    {
+                        "value": "A",
+                        "displayText": "再関連付けリクエスト"
+                    },
+                    {
+                        "value": "B",
+                        "displayText": "認証リクエスト"
+                    },
+                    {
+                        "value": "C",
+                        "displayText": "アソシエーションリクエスト"
+                    },
+                    {
+                        "value": "D",
+                        "displayText": "プローブリクエスト"
+                    }
+                ],
+                "userAnswers": []
+            },
+{
+    "image": "images/q131.png",
+    "answers": ["C"],
+    "explanationText": "コントロールプレーンは、ネットワーク全体のトポロジ情報を収集し、最適な通信経路を決定する機能を担います。具体的には、ルーティングプロトコルを使用して他のルーターと情報を交換し、転送テーブル（FIB）やルーティングテーブルを作成します。この経路情報に基づいて、データプレーンが実際のトラフィック転送を行います。",
+    "explanationImage": "",
+    "choices": [
+        { "value": "A", "displayText": "転送情報ベースで出力インターフェイスを検索します。" },
+        { "value": "B", "displayText": "トラフィックを次のホップに転送します。" },
+        { "value": "C", "displayText": "他のルータとトポロジ情報を交換します。" },
+        { "value": "D", "displayText": "ネットワーク デバイスへの CLI アクセスを提供します。" }
+    ],
+    "userAnswers": []
+},
+{
+    "image": "images/q132.png",
+    "answers": ["B"],
+    "explanationText": "スパニングツリープロトコル（STP）では、ブリッジプライオリティがデフォルト（32768）で等しい場合、ブリッジIDの一部であるMACアドレスを比較して、最も低いMACアドレスを持つスイッチがルートブリッジとして選出されます。提示されたMACアドレスを比較すると、左から順に16進数で比較して最初の異なる桁で値が最も小さいものが優先されます。比較すると、MDF-DC-2のMACアドレス (0d:0E:18:1B:05:97) が最も小さい値であるため、MDF-DC-2がルートブリッジになります。",
+    "explanationImage": "",
+    "choices": [
+        { "value": "A", "displayText": "MDF-DC-1: 0d:E0:43:96:02:30" },
+        { "value": "B", "displayText": "MDF-DC-2: 0d:0E:18:1B:05:97" },
+        { "value": "C", "displayText": "MDF-DC-4: 0d:E0:19:A1:B3:19" },
+        { "value": "D", "displayText": "MDF-DC-3: 0d:0E:18:2A:3C:9D" }
+    ],
+    "userAnswers": []
+},
+            {
+                image: 'images/q133.png',////
+                answers: ['N'], 
+                explanationText: '',
+                explanationImage: 'images/a133.png',////
+                choices: [
+                    { value: 'N', displayText: '考えた' },
+                ],
+                userAnswers: [] 
+            },
+{
+    "image": "images/q134.png",
+    "answers": ["D"],
+    "explanationText": "JSONデータ形式では、データはキーと値のペアとして表現されます。コロン記号（:）の左側がキー（key）であり、右側が値（value）です。「VPN11」はコロンの右側にあり、ダブルクォーテーションで囲まれた文字列であるため、これは**値**を表しています。",
+    "explanationImage": "",
+    "choices": [
+        { "value": "A", "displayText": "キー" },
+        { "value": "B", "displayText": "配列" },
+        { "value": "C", "displayText": "オブジェクト" },
+        { "value": "D", "displayText": "値" }
+    ],
+    "userAnswers": []
+},
+{
+    "image": "images/q135.png",
+    "answers": ["D"],
+    "explanationText": "STP PortFastは、エンドホスト（PC、サーバーなど）が接続されるアクセスポートでのみ、追加設定なしでサポートされます。トランクポートやレイヤ3インターフェイスでは、スパニングツリーが正しく機能しなくなる可能性があるため、通常は使用しません。",
+    "explanationImage": "",
+    "choices": [
+        { "value": "A", "displayText": "レイヤ 3 メイン インターフェイス" },
+        { "value": "B", "displayText": "レイヤ 3 サブインターフェイス" },
+        { "value": "C", "displayText": "トランクポート" },
+        { "value": "D", "displayText": "アクセスポート" }
+    ],
+    "userAnswers": []
+},
+{
+    "image": "images/q136.png",
+    "answers": ["D"],
+    "explanationText": "JSONデータ形式において、データはキーと値のペアで構成されます。コロン記号（:）の左側がキー（key）であり、右側が値（value）です。「R29」はコロンの右側にあり、ダブルクォーテーションで囲まれた文字列であるため、これは**値**を表しています。",
+    "explanationImage": "",
+    "choices": [
+        { "value": "A", "displayText": "配列" },
+        { "value": "B", "displayText": "キー" },
+        { "value": "C", "displayText": "オブジェクト" },
+        { "value": "D", "displayText": "値" }
+    ],
+    "userAnswers": []
+},
+{
+    "image": "images/q137.png",
+    "answers": ["A"],
+    "explanationText": "行2の「{\"switch\": \"SW16\", \"interface\":\"fe3/43\"}」は、波括弧 {} で囲まれており、これはJSONにおける**オブジェクト**を表します。オブジェクトはキーと値のペアの集合としてデータを構造化します。",
+    "explanationImage": "",
+    "choices": [
+        { "value": "A", "displayText": "オブジェクト" },
+        { "value": "B", "displayText": "値" },
+        { "value": "C", "displayText": "キー" },
+        { "value": "D", "displayText": "配列" }
+    ],
+    "userAnswers": []
+},
+            {
+                image: 'images/q138.png',////
+                answers: ['N'], 
+                explanationText: '',
+                explanationImage: 'images/a138.png',////
+                choices: [
+                    { value: 'N', displayText: '考えた' },
+                ],
+                userAnswers: [] 
+            },
+            {
+                image: 'images/q139.png',////
+                answers: ['N'], 
+                explanationText: '',
+                explanationImage: 'images/a139.png',////
+                choices: [
+                    { value: 'N', displayText: '考えた' },
+                ],
+                userAnswers: [] 
+            },
+            {
+                image: 'images/q140.png',////
+                answers: ['N'], 
+                explanationText: '',
+                explanationImage: 'images/a140.png',////
+                choices: [
+                    { value: 'N', displayText: '考えた' },
+                ],
+                userAnswers: [] 
+            },
+            {
+                image: 'images/q141.png',////
+                answers: ['N'], 
+                explanationText: '',
+                explanationImage: 'images/a141.png',////
+                choices: [
+                    { value: 'N', displayText: '考えた' },
+                ],
+                userAnswers: [] 
+            },
+            {
+                image: 'images/q142.png',////
+                answers: ['N'], 
+                explanationText: '',
+                explanationImage: 'images/a142.png',////
+                choices: [
+                    { value: 'N', displayText: '考えた' },
+                ],
+                userAnswers: [] 
+            },
+            {
+                image: 'images/q143.png',////
+                answers: ['N'], 
+                explanationText: '',
+                explanationImage: 'images/a143.png',////
+                choices: [
+                    { value: 'N', displayText: '考えた' },
+                ],
+                userAnswers: [] 
+            },
+            {
+                image: 'images/q144.png',////
+                answers: ['N'], 
+                explanationText: '',
+                explanationImage: 'images/a144.png',////
+                choices: [
+                    { value: 'N', displayText: '考えた' },
+                ],
+                userAnswers: [] 
+            },
+            {
+                image: 'images/q145.png',////
+                answers: ['N'], 
+                explanationText: '',
+                explanationImage: 'images/a145.png',////
+                choices: [
+                    { value: 'N', displayText: '考えた' },
+                ],
+                userAnswers: [] 
+            },
+{
+    "image": "images/q146.png",
+    "answers": ["A"],
+    "explanationText": "プライベートIPv4アドレスは、RFC 1918で定義された範囲のアドレスであり、インターネット上ではルーティングされません。そのため、地域のインターネットレジストリ（RIR）から正式な割り当てを受ける必要なく、組織や家庭内のローカルネットワークで自由に使用することができます。",
+    "explanationImage": "",
+    "choices": [
+        { "value": "A", "displayText": "地域のインターネット当局からの割り当てなしに使用されている" },
+        { "value": "B", "displayText": "サブネット上のトラフィックがサイト間 VPN を経由して外部の組織に到達する必要がある場合に使用されます。" },
+        { "value": "C", "displayText": "ネットワークルーター上の転送テーブルを減らす" },
+        { "value": "D", "displayText": "無制限のアドレス範囲を提供します" }
+    ],
+    "userAnswers": []
+},
+{
+    "image": "images/q147.png",
+    "answers": ["C"],
+    "explanationText": "show interfaceコマンドの出力には、キューイングメカニズムが動作していることを示す行があります。具体的には「Input queue: 0/300/0/0 (size/max/drops/flushes)」と「Output queue: 0/300 (size/max)」の表示があり、これはインターフェイスがトラフィックを処理する際に「順番待ち（キューイング）」の機能を利用していることを明確に示しています。現在、エラーやドロップは発生しておらず、インターフェイスは正常に機能していますが、パケット処理のための待ち行列が存在するため、Cが最も適切な回答となります。他の選択肢は、エラーフリーであり、現在のレートがゼロであるため、状況に合致しません。",
+    "explanationImage": "",
+    "choices": [
+        { "value": "A", "displayText": "NIC が不良です" },
+        { "value": "B", "displayText": "高スループット" },
+        { "value": "C", "displayText": "順番待ち" },
+        { "value": "D", "displayText": "ブロードキャストストーム" }
+    ],
+    "userAnswers": []
+},
+{
+    "image": "images/q148.png",
+    "answers": ["D"],
+    "explanationText": "プライベートIPv4アドレッシングは、組織内ネットワークでグローバルIPアドレスを消費せずに多数のデバイスを接続できるようにする技術です。これにより、単一のグローバルIPアドレスを複数のプライベートIPアドレスを持つデバイスで共有することが可能となり、限られたIPv4アドレス空間を節約し、IPv4アドレスの枯渇問題を緩和する役割を果たしています。",
+    "explanationImage": "",
+    "choices": [
+        { "value": "A", "displayText": "ISP が Web サービスのために新しいサブネットをインターネットにアドバタイズすることを要求する場合に使用されます。" },
+        { "value": "B", "displayText": "無制限のアドレス範囲を提供します" },
+        { "value": "C", "displayText": "ネットワークに複数のエンドポイント リスナーがある場合に使用されます。" },
+        { "value": "D", "displayText": "IPv4 アドレスの不足を軽減する" }
+    ],
+    "userAnswers": []
+},
+{
+    "image": "images/q149.png",
+    "answers": ["C"],
+    "explanationText": "プライベートIPv4アドレス空間は、インターネット上でルーティングされないため、組織内のローカルネットワークでのみ使用されます。外部のネットワークやインターネットとはNAT（ネットワークアドレス変換）などの仕組みなしには通信できません。したがって、他の内部ホストとのみ通信するホストで使用されるのが特徴です。",
+    "explanationImage": "",
+    "choices": [
+        { "value": "A", "displayText": "サブネット上のトラフィックがサイト間 VPN を経由して外部の組織に到達する必要がある場合に使用されます。" },
+        { "value": "B", "displayText": "エンドポイントがパブリック ネットワークの境界を越えて通信できるようにする" },
+        { "value": "C", "displayText": "他の内部ホストとのみ通信するホストで使用されます。" },
+        { "value": "D", "displayText": "ネットワークの複雑さを軽減する" }
+    ],
+    "userAnswers": []
+},
+{
+    "image": "images/q150.png",
+    "answers": ["B"],
+    "explanationText": "プライベートIPv4アドレスは、組織内ネットワークで多数のデバイスを接続できるようにする技術です。これにより、単一のグローバルIPアドレスを複数のプライベートIPアドレスを持つデバイスで共有することが可能となり、限られたIPv4アドレス空間を節約し、IPv4アドレスの枯渇問題を緩和する役割を果たしています。",
+    "explanationImage": "",
+    "choices": [
+        { "value": "A", "displayText": "アウトバウンド ACL が適用されるとインターネットを通過します" },
+        { "value": "B", "displayText": "IPv4 アドレスの不足を軽減する" },
+        { "value": "C", "displayText": "ISP が Web サービスのために新しいサブネットをインターネットにアドバタイズすることを要求する場合に使用されます。" },
+        { "value": "D", "displayText": "インターネット経由で安全な接続を可能にする" }
+    ],
+    "userAnswers": []
+},
+{
+    "image": "images/q151.png",
+    "answers": ["C"],
+    "explanationText": "show interfaceコマンドの出力において、「30 second input rate 200234673 bits/sec」および「30 second output rate 233830309 bits/sec」という数値は、インターフェイスの帯域幅（100 Mbps = 100,000,000 bits/sec）を大幅に超えています。また、「txload 255/255, rxload 255/255」は、過去5分間の平均負荷が最大値（100%利用）であることを示しています。これらの数値は、インターフェイスが設定された速度以上のトラフィックを処理しようとしており、**高スループット**の状態であることを示しています。",
+    "explanationImage": "",
+    "choices": [
+        { "value": "A", "displayText": "ブロードキャストストーム" },
+        { "value": "B", "displayText": "デュプレックスの不一致" },
+        { "value": "C", "displayText": "高スループット" },
+        { "value": "D", "displayText": "順番待ち" }
+    ],
+    "userAnswers": []
+},
+{
+    "image": "images/q152.png",
+    "answers": ["B"],
+    "explanationText": "プライベートIPv4アドレスは、RFC 1918で定義された範囲のアドレスであり、インターネット上ではルーティングされません。このため、世界中の異なる組織や家庭内ネットワークで、競合することなく同じプライベートアドレス範囲（例：192.168.1.x）を自由に再利用できます。外部との通信にはNAT（ネットワークアドレス変換）が使用されます。",
+    "explanationImage": "",
+    "choices": [
+        { "value": "A", "displayText": "ISP が Web サービスのために新しいサブネットをインターネットにアドバタイズすることを要求する場合に使用されます。" },
+        { "value": "B", "displayText": "複数の企業が競合することなく同じアドレスを使用できるようにする" },
+        { "value": "C", "displayText": "ファイアウォールの外部インターフェイスで使用されます" },
+        { "value": "D", "displayText": "エンドポイントがパブリック ネットワークの境界を越えて通信できるようにする" }
+    ],
+    "userAnswers": []
+},
+            {
+                image: 'images/q153.png',////
+                answers: ['N'], 
+                explanationText: '',
+                explanationImage: 'images/a153.png',////
+                choices: [
+                    { value: 'N', displayText: '考えた' },
+                ],
+                userAnswers: [] 
+            },
+            {
+                image: 'images/q154.png',////
+                answers: ['N'], 
+                explanationText: '',
+                explanationImage: 'images/a154.png',////
+                choices: [
+                    { value: 'N', displayText: '考えた' },
+                ],
+                userAnswers: [] 
+            },
+            {
+                image: 'images/q155.png',////
+                answers: ['N'], 
+                explanationText: '',
+                explanationImage: 'images/a155.png',////
+                choices: [
+                    { value: 'N', displayText: '考えた' },
+                ],
+                userAnswers: [] 
+            },
+{
+    "image": "images/q156.png",
+    "answers": ["A"],
+    "explanationText": "SSID（Service Set Identifier）は、特定のWLAN（無線LAN）を識別するための名前です。アクセスポイントはSSIDをブロードキャストし、クライアントデバイスは接続したいSSIDを選択してネットワークに参加します。",
+    "explanationImage": "",
+    "choices": [
+        { "value": "A", "displayText": "WLAN 上のアクセス ポイントを識別します" },
+        { "value": "B", "displayText": "パスワードを使用してアクセス ポイントに接続する" },
+        { "value": "C", "displayText": "ポリシーを使用して無許可のユーザーを防止する" },
+        { "value": "D", "displayText": "大文字と小文字を区別するテキスト文字列を使用する" }
+    ],
+    "userAnswers": []
+},
+{
+    "image": "images/q157.png",
+    "answers": ["B"],
+    "explanationText": "プライベートIPv4アドレスは、企業や家庭などの閉じたネットワーク（プライベートネットワーク）内でのみ使用されるIPアドレスです。これらのアドレスはインターネット上ではルーティングされないため、ファイアウォールなどの内側に配置され、他の内部ホストとのみ通信する機器に割り当てられます。外部と通信するにはNAT（ネットワークアドレス変換）が必要です。",
+    "explanationImage": "",
+    "choices": [
+        { "value": "A", "displayText": "ネットワークの複雑さを軽減する" },
+        { "value": "B", "displayText": "他の内部ホストとのみ通信するホストで使用されます。" },
+        { "value": "C", "displayText": "ネットワーク内のアドレス指定を簡素化する" },
+        { "value": "D", "displayText": "ネットワーク保守コストの削減" }
+    ],
+    "userAnswers": []
+},
+{
+    "image": "images/q158.png",
+    "answers": ["C"],
+    "explanationText": "現代のワイヤレスネットワークの暗号化プロトコル（WPA2/WPA3など）では、機密性の確保と同時に、データが改ざんされていないかを確認する整合性チェックも行われます。これは、フレームの偽造などの攻撃を特定し防ぐために不可欠な特徴です。",
+    "explanationImage": "",
+    "choices": [
+        { "value": "A", "displayText": "WLAN 上のアクセス ポイントを識別します" },
+        { "value": "B", "displayText": "パスワードを使用してアクセス ポイントに接続する" },
+        { "value": "C", "displayText": "整合性チェックを使用してフレーム内の偽造攻撃を特定する" },
+        { "value": "D", "displayText": "認証プロトコルを使用してネットワークを保護する" }
+    ],
+    "userAnswers": []
+},
+{
+    "image": "images/q159.png",
+    "answers": ["D"],
+    "explanationText": "プライベートIPv4アドレス空間は、インターネットに直接ルーティングされないように予約されたアドレス範囲です。これらのアドレスは、組織や家庭内のローカルネットワーク内で内部ホスト間の通信にのみ使用されます。インターネットとの通信にはNAT（ネットワークアドレス変換）が必要です。",
+    "explanationImage": "",
+    "choices": [
+        { "value": "A", "displayText": "ネットワーク内のアドレス指定を簡素化します。" },
+        { "value": "B", "displayText": "PCI 規制に準拠" },
+        { "value": "C", "displayText": "ネットワークルーター上の転送テーブルを減らす" },
+        { "value": "D", "displayText": "他の内部ホストとのみ通信するホストで使用されます。" }
+    ],
+    "userAnswers": []
+},
+{
+    "image": "images/q160.png",
+    "answers": ["C"],
+    "explanationText": "SSID（Service Set Identifier）は、通常、アクセスポイントからビーコン信号（Beacon Frame）として定期的にブロードキャストされます。このビーコン信号にはSSIDが含まれており、ワイヤレスクライアントデバイスが利用可能なネットワークを検出して表示できるようになっています。",
+    "explanationImage": "",
+    "choices": [
+        { "value": "A", "displayText": "ネットワークの便乗を排除する" },
+        { "value": "B", "displayText": "ユーザーにログイン ID の入力を求める" },
+        { "value": "C", "displayText": "デフォルトでビーコン信号をブロードキャストしてその存在を通知する" },
+        { "value": "D", "displayText": "文字と数字の組み合わせを含める必要があります" }
+    ],
+    "userAnswers": []
+},
+{
+    "image": "images/q161.png",
+    "answers": [
+        "D"
+    ],
+    "explanationText": "ワイヤレスネットワークの暗号化は、ネットワーク上を無線で送受信されるデータをスクランブル（暗号化）することで、権限のない傍受者がその内容を読み取れないようにすることを目的としています。これにより、機密情報が保護されます。スパイウェア対策やログインIDの要求、ゼロデイ攻撃の検出とは直接的な目的が異なります。",
+    "explanationImage": "",
+    "choices": [
+        {
+            "value": "A",
+            "displayText": "スパイウェアに対する保護を強化します"
+        },
+        {
+            "value": "B",
+            "displayText": "ユーザーにログイン ID の入力を求める"
+        },
+        {
+            "value": "C",
+            "displayText": "暗号を使用してゼロデイ ネットワーク攻撃を検出および防止する"
+        },
+        {
+            "value": "D",
+            "displayText": "ネットワークを通過するデータの傍受を防止する"
+        }
+    ],
+
+    "userAnswers": []
+},
+{
+    "image": "images/q162.png",
+    "answers": [
+        "D"
+    ],
+    "explanationText": "SSID（Service Set Identifier）は、特定のWLAN（無線LAN）を識別するための名前（識別子）です。クライアントデバイスが接続したいネットワークを選択する際に使用されます。通常、アクセスポイントはこのSSIDをビーコン信号でブロードキャストして、周囲のデバイスに自身の存在とネットワーク名（識別子）を知らせます。",
+    "explanationImage": "",
+    "choices": [
+        {
+            "value": "A",
+            "displayText": "データ脅威がネットワークを攻撃する前に阻止します。"
+        },
+        {
+            "value": "B",
+            "displayText": "送信側と受信側で接続をエンコードする"
+        },
+        {
+            "value": "C",
+            "displayText": "デフォルトでビーコン信号をブロードキャストしてその存在を通知する"
+        },
+        {
+            "value": "D",
+            "displayText": "WLAN 上のアクセス ポイントを識別する"
+        }
+    ],
+    "userAnswers": []
+},
+{
+    "image": "images/q163.png",
+    "answers": [
+        "A"
+    ],
+    "explanationText": "PC1とPC2が通信できるようにするには、SW1とSW2間のリンクがVLAN 5とVLAN 10の両方のトラフィックを通過させるトランクリンクとして確立されている必要があります。SW1のfa0/1インターフェイスは`switchport mode dynamic auto`で設定されています。 。デフォルト設定の新しいSW2のポートも通常`dynamic auto`モードです。 。両方のポートが`dynamic auto`モードの場合、どちらのポートもトランクリンクの確立を積極的に要求しないため、リンクはトランクではなくアクセスポートとして機能します。 。これによりPC1とPC2間の通信ができなくなります。問題を解決するには、SW2側のfa0/1インターフェイスで`switchport mode trunk`コマンドを設定し、ポートを永続的なトランクモードに強制する必要があります。 。これにより、SW1の`dynamic auto`ポートとトランクリンクが確立されます。",
+    "explanationImage": "",
+    "choices": [
+        {
+            "value": "A",
+            "displayText": "switchport mode trunk"
+        },
+        {
+            "value": "B",
+            "displayText": "switchport trunk native vlan 10"
+        },
+        {
+            "value": "C",
+            "displayText": "switchport mode access"
+        },
+        {
+            "value": "D",
+            "displayText": "switchport trunk allowed remove 10"
+        }
+    ],
+    "userAnswers": []
+},
+            {
+                image: 'images/q164.png',////
+                answers: ['N'], 
+                explanationText: '',
+                explanationImage: 'images/a164.png',////
+                choices: [
+                    { value: 'N', displayText: '考えた' },
+                ],
+                userAnswers: [] 
+            },
+{
+    "image": "images/q165.png",
+    "answers": [
+        "C"
+    ],
+    "explanationText": "プライベートIPv4アドレスは、RFC 1918で定義された特定のアドレス範囲（例: 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16）です。これらはローカルネットワーク内でのみ使用され、インターネット上ではルーティングされません。したがって、IANAとの調整や登録をせずに、追跡なしで内部的に自由に使用することができます。",
+    "explanationImage": "",
+    "choices": [
+        {
+            "value": "A",
+            "displayText": "最大 65,536 個の使用可能なアドレスで構成される"
+        },
+        {
+            "value": "B",
+            "displayText": "自律システム番号と組み合わせて IANA によって発行される"
+        },
+        {
+            "value": "C",
+            "displayText": "追跡または登録なしで使用される"
+        },
+        {
+            "value": "D",
+            "displayText": "アウトバウンド ACL が適用されている場合にインターネットを通過する"
+        }
+    ],
+    "userAnswers": []
+},
+            {
+                image: 'images/q166.png',////
+                answers: ['N'], 
+                explanationText: '',
+                explanationImage: 'images/a166.png',////
+                choices: [
+                    { value: 'N', displayText: '考えた' },
+                ],
+                userAnswers: [] 
+            },
+            {
+                image: 'images/q167.png',////
+                answers: ['N'], 
+                explanationText: '',
+                explanationImage: 'images/a167.png',////
+                choices: [
+                    { value: 'N', displayText: '考えた' },
+                ],
+                userAnswers: [] 
+            },
+{
+    "image": "images/q168.png",
+    "answers": [
+        "C"
+    ],
+    "explanationText": "スイッチは、受信したフレームの送信元MACアドレスと、そのフレームが流入したポートの情報を学習します。この情報をMACアドレステーブル（CAMテーブル）に追加（登録）することで、次回以降、宛先MACアドレスに基づいて適切なポートへのみフレームを転送できるようになります。これにより、ネットワークトラフィックの効率化とコリジョンドメインの分割を実現します。",
+    "explanationImage": "",
+    "choices": [
+        {
+            "value": "A",
+            "displayText": "キューイングせずにフレームをすべてのポートにブロードキャストします 。"
+        },
+        {
+            "value": "B",
+            "displayText": "不明な宛先を見つけるために ARP リクエストを送信します"
+        },
+        {
+            "value": "C",
+            "displayText": "不明な送信元 MAC アドレスをアドレス テーブルに追加する"
+        },
+        {
+            "value": "D",
+            "displayText": "新しいフレームを受信したときに再送信要求を送信します 。"
+        }
+    ],
+    "userAnswers": []
+},
+{
+    "image": "images/q169.png",
+    "answers": [
+        "C"
+    ],
+    "explanationText": "出力結果から、インターフェイスの入出力レートが非常に高いことがわかります。「30 second input rate 234712855 bits/sec」、「30 second output rate 228528957 bits/sec」という値は、インターフェイスの帯域幅100 Mbps（100,000,000 bits/sec）を大幅に超えています。txloadとrxloadも最大値の255/255を示しており、インターフェイスが最大容量で完全に利用されていることを意味します。これは、データの送受信が非常に活発に行われている高スループットの状態を示しています。",
+    "explanationImage": "",
+    "choices": [
+        {
+            "value": "A",
+            "displayText": "ブロードキャストストーム"
+        },
+        {
+            "value": "B",
+            "displayText": "衝突"
+        },
+        {
+            "value": "C",
+            "displayText": "高スループット"
+        },
+        {
+            "value": "D",
+            "displayText": "デュプレックスの不一致."
+        }
+    ],
+    "userAnswers": []
+},
+{
+    "image": "images/q170.png",
+    "answers": [
+        "C"
+    ],
+    "explanationText": "SSID（Service Set Identifier）は、無線LANネットワークを識別するための名前です。アクセスポイントは通常、その存在を周囲のデバイスに知らせるために、デフォルトでSSIDを含むビーコン信号を定期的にブロードキャスト（発信）します。これにより、ユーザーは利用可能なネットワークのリストから接続先を選択できます。",
+    "explanationImage": "",
+    "choices": [
+        {
+            "value": "A",
+            "displayText": "電流を電波に変換します"
+        },
+        {
+            "value": "B",
+            "displayText": "ポリシーを使用して無許可のユーザーを防止する"
+        },
+        {
+            "value": "C",
+            "displayText": "デフォルトでビーコン信号をブロードキャストしてその存在を通知する"
+        },
+        {
+            "value": "D",
+            "displayText": "ユーザーにログイン ID の入力を求める"
+        }
+    ],
+    "userAnswers": []
+},
+            {
+                image: 'images/q171.png',////
+                answers: ['N'], 
+                explanationText: '',
+                explanationImage: 'images/a171.png',////
+                choices: [
+                    { value: 'N', displayText: '考えた' },
+                ],
+                userAnswers: [] 
+            },
+{
+    "image": "images/q172.png",
+    "answers": [
+        "D"
+    ],
+    "explanationText": "スパニングツリープロトコル（STP）では、ブリッジID（BID）が最も小さいスイッチがルートブリッジに選出されます。BIDは、ブリッジプライオリティ値とスイッチのMACアドレスを組み合わせた値です。ブリッジプライオリティ値が低いほど、ルートブリッジとして選出される可能性が高まります。提示された選択肢のうち、SW1とSW4はブリッジプライオリティ値が28672と最も低くなっています。ブリッジプライオリティが同じ場合、次にMACアドレスを比較し、MACアドレスが最も小さいスイッチがルートブリッジとなります。SW1のMACアドレス（0c:d4:e9:1d:3c:24）とSW4のMACアドレス（0b:09:23:33:b8:91）を比較すると、最初の2桁で0c（十進数で12）よりも0b（十進数で11）の方が小さいため、SW4のMACアドレスがより小さいと判断されます。したがって、SW4がルートブリッジになります。",
+    "explanationImage": "",
+    "choices": [
+        {
+            "value": "A",
+            "displayText": "SW3 -<br>ブリッジ優先度 - 57344 -<br>mac-address 0b:bb:e0:96:a3:86"
+        },
+        {
+            "value": "B",
+            "displayText": "SW2 -<br>ブリッジ優先度 - 57344 -<br>mac-address 00:b6:c5:17:8e:89"
+        },
+        {
+            "value": "C",
+            "displayText": "SW1 -<br>ブリッジ優先度 - 28672 -<br>MAC アドレス 0c:d4:e9:1d:3c:24"
+        },
+        {
+            "value": "D",
+            "displayText": "SW4 -<br>ブリッジ優先度 - 28672 -<br>mac-address 0b:09:23:33:b8:91"
+        }
+    ],
+    "userAnswers": []
+},
+            {
+                "image": "images/q173.png",
+                "answers": ["B"],
+                "explanationText": "ルーターは最適な経路を選択する際、管理距離（Administrative Distance: AD）が最も小さい経路を優先します。OSPF (O) のADは110、RIP (R) のADは120です。AD 110の経路が優先されます。ADが同じ場合、次にメトリック（コスト）が最も小さい経路を選択します。G0/20経由のメトリックは9443、G0/16経由のメトリックは29560です。メトリックが小さいG0/20経由が最適経路となります。",
+                "explanationImage": "",
+                "choices": [
+                    { "value": "A", "displayText": "G0\/9" },
+                    { "value": "B", "displayText": "G0\/20" },
+                    { "value": "C", "displayText": "G0\/16" },
+                    { "value": "D", "displayText": "G0\/11" }
+                ],
+                "userAnswers": [] 
+            },
+            {
+                "image": "images/q174.png",
+                "answers": ["C"],
+                "explanationText": "JSONデータは、コロン記号（:）を境界として、「キー」（左側）と「値」（右側）のペアで構成されます。このスキーマの例では、「port」がキー（フィールド名）であり、「fe5/42」はそのキーに対応する具体的な値（データ）を表しています。値は文字列（ダブルクォーテーションで囲まれている）です。",
+                "explanationImage": "",
+                "choices": [
+                    { "value": "A", "displayText": "配列" },
+                    { "value": "B", "displayText": "オブジェクト" },
+                    { "value": "C", "displayText": "値" },
+                    { "value": "D", "displayText": "キー" }
+                ],
+                "userAnswers": [] 
+            },
+            {
+                "image": "images/q175.png",
+                "answers": ["C"],
+                "explanationText": "スパニングツリープロトコル（STP）では、ブリッジIDが最も小さいスイッチがルートブリッジに選出されます。ブリッジIDは「ブリッジプライオリティ値」と「MACアドレス」を組み合わせたものです。選定順序は、まずプライオリティ値が小さい方を優先し、同点の場合はMACアドレスが最も小さい方（辞書順で最も若い値）を優先します。提供された情報では、SW1とSW3のプライオリティ値が32768で最も小さいため、この2つで比較します。SW1のMACアドレスは0f:d7:9e:13:ab:82、SW3のMACアドレスは01:1c:6c:66:b7:70です。MACアドレスの先頭部分を比較すると「01」は「0f」よりも小さいため、SW3がルートブリッジとして選出されます。",
+                "explanationImage": "",
+                "choices": [
+                    { "value": "A", "displayText": "SW 1 -ブリッジ優先度 - 32768 -mac-address 0f:d7:9e:13:ab:82" },
+                    { "value": "B", "displayText": "SW 2 -ブリッジ優先度 - 40960 -mac-address 05:d8:33:09:8f:89" },
+                    { "value": "C", "displayText": "SW 3 -ブリッジ優先度 - 32768 -mac-address 01:1c:6c:66:b7:70" },
+                    { "value": "D", "displayText": "SW 4 -ブリッジ優先度 - 40960 -mac-address 04:44:97:51:63:17" }
+                ],
+                "userAnswers": [] 
+            },
+            {
+                "image": "images/q176.png",
+                "answers": ["C"],
+                "explanationText": "PCのIPアドレス（10.2.2.2）とサブネットマスク（255.255.255.248、/29）から、PCが所属するネットワーク範囲は10.2.2.0〜10.2.2.7であることがわかります。デフォルトゲートウェイのアドレス（10.2.2.10）は、このネットワーク範囲外のアドレスであり、同じサブネット内に存在していません。デフォルトゲートウェイは、PCと同じネットワークセグメント内に設定されている必要があります。インターネットに接続するには、デフォルトゲートウェイのアドレスをPCと同じネットワーク範囲内のアドレス（例: ルーターのインターフェイスアドレス10.2.2.1）に変更する必要があります。",
+                "explanationImage": "",
+                "choices": [
+                    { "value": "A", "displayText": "サブネットマスク" },
+                    { "value": "B", "displayText": "DNS サーバー" },
+                    { "value": "C", "displayText": "デフォルトゲートウェイ" },
+                    { "value": "D", "displayText": "DHCP サーバー" }
+                ],
+                "userAnswers": [] 
+            },
+            {
+                image: 'images/q177.png',////
+                answers: ['N'], 
+                explanationText: '',
+                explanationImage: 'images/a177.png',////
+                choices: [
+                    { value: 'N', displayText: '考えた' },
+                ],
+                userAnswers: [] 
+            },
+            {
+                "image": "images/q178.png",
+                "answers": ["C"],
+                "explanationText": "スイッチは、受信したフレームの宛先MACアドレスをMACアドレステーブル（CAMテーブル）と照合し、その宛先MACアドレスが学習されている特定の送信元ポートにのみフレームを転送（スイッチング）します。これにより、不要なポートへのトラフィック転送を防ぎます。宛先が不明な場合やブロードキャストフレームの場合は、受信ポート以外すべてのポートにフラッディングします。",
+                "explanationImage": "",
+                "choices": [
+                    { "value": "A", "displayText": "送信元と宛先の MAC アドレスを書き換えます。" },
+                    { "value": "B", "displayText": "CDP を使用してフレームを隣接ポートに転送する" },
+                    { "value": "C", "displayText": "既知の宛先を宛先ポートに転送する" },
+                    { "value": "D", "displayText": "すべてのインターフェイスと VLAN でデフォルトで無効になっています" }
+                ],
+                "userAnswers": [] 
+            },
+            {
+                image: 'images/q179.png',////
+                answers: ['N'], 
+                explanationText: '',
+                explanationImage: 'images/a179.png',////
+                choices: [
+                    { value: 'N', displayText: '考えた' },
+                ],
+                userAnswers: [] 
+            },
+    {
+        "image": "images/q180.png",
+        "answers": ["D"],
+        "explanationText": "SSID（Service Set Identifier）は、複数のワイヤレスネットワークが存在する場合に、特定のネットワークを識別するための名前です。これにより、ユーザーは接続したいネットワークを容易に見つけて選択することができます。",
+        "explanationImage": "",
+        "choices": [
+            { "value": "A", "displayText": "ポリシーを使用して無許可のユーザーを防止します" },
+            { "value": "B", "displayText": "WLAN 上のアクセス ポイントを識別する" },
+            { "value": "C", "displayText": "ユーザーにログイン ID の入力を求める" },
+            { "value": "D", "displayText": "名前を WLAN に関連付ける" }
+        ],
+        "userAnswers": []
+    },
+    {
+        "image": "images/q181.png",
+        "answers": ["C"],
+        "explanationText": "JSONデータ構造において、「ポート」という単語はコロン記号（:）の左側に位置しています。これはプロパティの名前またはキー（key）と呼ばれ、その右側にある具体的な値（value）とペアになっています。",
+        "explanationImage": "",
+        "choices": [
+            { "value": "A", "displayText": "値" },
+            { "value": "B", "displayText": "配列" },
+            { "value": "C", "displayText": "キー" },
+            { "value": "D", "displayText": "オブジェクト" }
+        ],
+        "userAnswers": []
+    },
+ //ーーーーーーーーーーーーーーーーーーーーーー必要に応じて問題を追加
+        ];
+        
+        let currentQuestions = [];
+        let currentQuestionIndex = 0;
+        let answered = false;
+
+        const titleScreen = document.getElementById('title-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const questionStatus = document.getElementById('question-status');
+        const questionImage = document.getElementById('question-image');
+        const choicesContainer = document.getElementById('choices');
+        const resultArea = document.getElementById('result-area');
+        const explanationArea = document.getElementById('explanation-area');
+        const nextButton = document.getElementById('next-button');
+        const prevButton = document.getElementById('prev-button');
+        const confirmButton = document.getElementById('confirm-button');
+        const questionNumberInput = document.getElementById('question-number-input');
+        const memoArea = document.getElementById('memo-area');
+        const memoButton = document.getElementById('memo-button');
+
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // ゲーム開始関数：モード指定を受け取る
+        function startGame(mode) {
+            // 元の問題データをディープコピー
+            let filteredQuestions = JSON.parse(JSON.stringify(originalQuestions));
+
+            if (mode === 'N_mode') {
+                // 解答のanswers配列に'N'が含まれる問題のみを抽出
+                filteredQuestions = filteredQuestions.filter(q => q.answers.includes('N'));
+                if (filteredQuestions.length === 0) {
+                    alert('解答に「N」が含まれる問題が見つかりませんでした。');
+                    return; // ゲームを開始しない
+                }
+            } else if (mode === 'S_mode') {
+                // 解答のanswers配列に'S'が含まれる問題のみを抽出
+                filteredQuestions = filteredQuestions.filter(q => q.answers.includes('S'));
+                 if (filteredQuestions.length === 0) {
+                    alert('解答に「S」が含まれる問題が見つかりませんでした。');
+                    return; // ゲームを開始しない
+                }
+            } else if (mode === 'random') {
+                // 全ての問題をシャッフル
+                shuffleArray(filteredQuestions);
+            }
+            // 'normal'モードの場合はフィルタリング・シャッフルなし
+
+            currentQuestions = filteredQuestions;
+
+            // 画面切り替え
+            titleScreen.style.display = 'none';
+            quizScreen.style.display = 'block';
+            currentQuestionIndex = 0;
+            loadQuestion();
+        }
+
+        function toggleMemo() {
+            if (memoArea.style.display === 'none' || memoArea.style.display === '') {
+                memoArea.style.display = 'block';
+                memoButton.textContent = 'メモを閉じる';
+            } else {
+                memoArea.style.display = 'none';
+                memoButton.textContent = 'メモを開く/閉じる';
+            }
+        }
+
+
+        function loadQuestion() {
+            if (currentQuestionIndex >= 0 && currentQuestionIndex < currentQuestions.length) {
+                const currentQuestion = currentQuestions[currentQuestionIndex];
+                const isMultipleChoice = currentQuestion.answers.length > 1;
+
+                questionImage.src = currentQuestion.image;
+                choicesContainer.innerHTML = '';
+                resultArea.textContent = '';
+                explanationArea.innerHTML = '';
+                explanationArea.style.display = 'none';
+                answered = currentQuestion.userAnswers.length > 0;
+                
+                questionStatus.textContent = `問題 ${currentQuestionIndex + 1} / ${currentQuestions.length} (${isMultipleChoice ? '複数選択' : '単一選択'}、正解${currentQuestion.answers.length}つ)`;
+                questionNumberInput.value = currentQuestionIndex + 1;
+
+                nextButton.style.display = answered ? 'block' : 'none';
+                confirmButton.style.display = answered ? 'none' : 'inline-block';
+                
+                prevButton.style.display = (currentQuestionIndex === 0) ? 'none' : 'block';
+                nextButton.textContent = (currentQuestionIndex === currentQuestions.length - 1) ? '結果を見る' : '次の問題';
+
+                const displayedChoices = answered ? currentQuestion.choices : shuffleArray([...currentQuestion.choices]);
+                if (!answered) {
+                   currentQuestion.choices = displayedChoices;
+                }
+                
+                displayedChoices.forEach(choiceObj => {
+                    const button = document.createElement('button');
+                    button.innerHTML = choiceObj.displayText;
+                    button.classList.add('choice-btn');
+                    button.setAttribute('data-value', choiceObj.value);
+                    button.onclick = () => toggleChoice(choiceObj.value, button, currentQuestion, isMultipleChoice);
+                    if (answered) {
+                        button.disabled = true;
+                        if (currentQuestion.answers.includes(choiceObj.value)) {
+                            button.classList.add('correct-answer');
+                        } else if (currentQuestion.userAnswers.includes(choiceObj.value)) {
+                             button.classList.add('incorrect-answer');
+                        }
+                    } else if (currentQuestion.userAnswers.includes(choiceObj.value)) {
+                        button.classList.add('selected');
+                    }
+                    choicesContainer.appendChild(button);
+                });
+                
+                if (answered) {
+                     updateResultArea(currentQuestion);
+                     displayExplanation(currentQuestion);
+                }
+
+                checkConfirmButtonStatus(currentQuestion, isMultipleChoice);
+
+
+            } else if (currentQuestionIndex === currentQuestions.length) {
+                endQuiz();
+            }
+        }
+
+        function toggleChoice(value, button, currentQuestion, isMultipleChoice) {
+            if (answered) return;
+            if (!isMultipleChoice) {
+                Array.from(choicesContainer.children).forEach(btn => {
+                    btn.classList.remove('selected');
+                });
+                currentQuestion.userAnswers = [value];
+                button.classList.add('selected');
+            } else {
+                const index = currentQuestion.userAnswers.indexOf(value);
+                if (index > -1) {
+                    currentQuestion.userAnswers.splice(index, 1);
+                    button.classList.remove('selected');
+                } else {
+                    currentQuestion.userAnswers.push(value);
+                    button.classList.add('selected');
+                }
+            }
+            checkConfirmButtonStatus(currentQuestion, isMultipleChoice);
+        }
+        
+        function checkConfirmButtonStatus(currentQuestion, isMultipleChoice) {
+            const requiredCount = isMultipleChoice ? currentQuestion.answers.length : 1;
+            if (currentQuestion.userAnswers.length === requiredCount) {
+                confirmButton.disabled = false;
+            } else {
+                confirmButton.disabled = true;
+            }
+        }
+
+
+        function confirmAnswer() {
+            const currentQuestion = currentQuestions[currentQuestionIndex];
+            answered = true;
+            confirmButton.style.display = 'none';
+            nextButton.style.display = 'block';
+
+            Array.from(choicesContainer.children).forEach(btn => {
+                btn.disabled = true;
+                const choiceValue = btn.getAttribute('data-value');
+                if (currentQuestion.answers.includes(choiceValue)) {
+                    btn.classList.add('correct-answer');
+                } else if (currentQuestion.userAnswers.includes(choiceValue)) {
+                    btn.classList.add('incorrect-answer');
+                }
+                 btn.classList.remove('selected');
+            });
+
+            updateResultArea(currentQuestion);
+            displayExplanation(currentQuestion);
+        }
+
+        function displayExplanation(currentQuestion) {
+            explanationArea.innerHTML = '';
+            if (currentQuestion.explanationText) {
+                const textNode = document.createElement('p');
+                textNode.textContent = currentQuestion.explanationText;
+                textNode.style.textAlign = 'left';
+                explanationArea.appendChild(textNode);
+            }
+            if (currentQuestion.explanationImage) {
+                const imageNode = document.createElement('img');
+                imageNode.src = currentQuestion.explanationImage;
+                imageNode.id = 'explanation-image';
+                imageNode.alt = '解説画像';
+                explanationArea.appendChild(imageNode);
+            }
+            explanationArea.style.display = 'block';
+        }
+
+        function updateResultArea(currentQuestion) {
+            const isCorrect = JSON.stringify([...currentQuestion.userAnswers].sort()) === JSON.stringify([...currentQuestion.answers].sort());
+            if (isCorrect) {
+                resultArea.textContent = '正解！';
+                resultArea.style.color = 'green';
+            } else {
+                resultArea.textContent = '不正解...';
+                resultArea.style.color = 'red';
+            }
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            loadQuestion();
+        }
+
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                loadQuestion();
+            }
+        }
+        
+        function jumpToQuestion() {
+            const inputVal = parseInt(questionNumberInput.value, 10);
+            if (!isNaN(inputVal) && inputVal >= 1 && inputVal <= currentQuestions.length) {
+                currentQuestionIndex = inputVal - 1;
+                loadQuestion();
+            } else {
+                alert(`1から${currentQuestions.length}までの有効な問題番号を入力してください。`);
+                questionNumberInput.value = currentQuestionIndex + 1;
+            }
+        }
+
+        function endQuiz() {
+            quizScreen.style.display = 'none';
+            titleScreen.style.display = 'block';
+            
+            let score = 0;
+            currentQuestions.forEach(q => {
+                if (JSON.stringify([...q.userAnswers].sort()) === JSON.stringify([...q.answers].sort())) {
+                    score++;
+                }
+            });
+            
+            alert(`クイズ終了！ ${currentQuestions.length}問中 ${score}問正解しました。タイトル画面に戻ります。`);
+        }
+
+    </script>
+</body>
+</html>
