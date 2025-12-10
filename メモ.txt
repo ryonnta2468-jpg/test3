@@ -99,7 +99,7 @@ C. 対称復号化アルゴリズムです。
 D. 暗号化するには、双方が同一のキーを持っている必要があります。
 
 上記ような文章を入力したときに、
-
+この問題を
             {
                 image: 'images/q37.png',
                 answers: [''], 
@@ -128,12 +128,15 @@ explanationImage: '',は何も記載せずに出力して下さい。
 
 送信する問題はすべてciscoの問題です。
 
+推測を行った場合は明確にどこを推測したのかを記載して下さい。
+
+コードはコピペできる形で表示してください。
+
+コピペとは別に追加で解説も出力してください。
 
 
 
-
-
-$i = 201; Get-ChildItem -Filter *.png | Sort-Object LastWriteTime | ForEach-Object { Rename-Item $_.FullName -NewName "q$($i).png"; $i++ }
+$i = 406; Get-ChildItem -Filter *.png | Sort-Object LastWriteTime | ForEach-Object { Rename-Item $_.FullName -NewName "q$($i).png"; $i++ }
 
 
 
@@ -147,3 +150,12 @@ $i = 201; Get-ChildItem -Filter *.png | Sort-Object LastWriteTime | ForEach-Obje
 ↓優先度
 名前をWLANに関連付ける　＞　WLAN上のアクセスポイントを識別する　＞　デフォルトでビーコン信号をブロードキャストしてその存在を通知する
 
+
+https://www.goritarou.com/ccna_frequent_occurrence_words/
+
+
+修正箇所
+
+Electron 
+
+EUI64解説102
